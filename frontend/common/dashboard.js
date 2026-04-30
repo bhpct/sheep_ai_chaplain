@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('userForm').addEventListener('submit', async (e) => {
+    document.getElementById('user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const uid = document.getElementById('user-uid').value;
         const name = document.getElementById('user-name').value;
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.success) {
                 Swal.fire('成功', '人員已儲存', 'success');
-                document.getElementById('userForm').reset();
+                document.getElementById('user-form').reset();
                 loadUsers();
             } else {
                 Swal.fire('錯誤', data.message || '儲存失敗', 'error');
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('hospitalForm').addEventListener('submit', async (e) => {
+    document.getElementById('hosp-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('hosp-id').value;
         const name = document.getElementById('hosp-name').value;
@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.success) {
                 Swal.fire('成功', '醫院頻道已建立！', 'success');
-                document.getElementById('hospitalForm').reset();
+                document.getElementById('hosp-form').reset();
                 loadHospitals();
             } else {
                 Swal.fire('錯誤', data.message || '建立失敗', 'error');
