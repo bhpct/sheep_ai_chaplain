@@ -1,0 +1,29 @@
+Antigravity 新專案開發指南與架構藍圖
+
+🚀 1. 專案技術棧 (Tech Stack)
+前端架構：原生 JavaScript (Vanilla JS), HTML5, CSS3, Bootstrap 5。不使用大型框架（如 React/Vue），強調輕量化與直接的 DOM 操作。
+後端架構：Node.js + Express.js。
+資料庫：Firebase Firestore (使用 Firebase Admin SDK 進行伺服器端操作)。
+平台整合：高度依賴 LINE LIFF SDK 進行使用者身分驗證與前端互動。
+
+⚙️ 2. 系統架構與效能原則
+快取機制 (Caching)：所有高頻率讀取的資料（如系統設定、事件清單）必須實作「記憶體快取 (In-memory Cache)」，TTL 預設為 60 秒，以大幅降低 Firestore 的讀取次數與成本。
+資料一致性：寫入資料庫時，必須同步更新或清除對應的記憶體快取，確保下次讀取時資料是最新的。
+非阻塞設計：後端 API 必須為非同步 (async/await)，且應妥善處理 try...catch，一律回傳標準的 JSON 格式（包含 success, message, data 等欄位）。
+
+🛡️ 3. 開發習慣與防呆標準 (Coding Standards)
+嚴格的錯誤攔截：前端在處理關鍵流程（如權限分配 applyRBAC、畫面渲染、API 資料處理）時，必須包覆 try...catch 區塊。若發生錯誤，需將錯誤具象化（例如使用 Swal.fire 彈出警告），絕對不允許發生「畫面無限轉圈」或「默默死機」的狀況。
+編碼格式 (Encoding)：所有檔案必須嚴格使用 UTF-8 (無 BOM) 編碼。若使用腳本操作或寫入檔案，需特別注意避免 Windows PowerShell 預設輸出造成中文亂碼 (Mojibake) 或編碼破壞。
+防禦性程式設計：操作 DOM 元素或物件屬性前，務必檢查其是否存在（例如 if (element) element.innerHTML = ... 或使用 Optional Chaining ?.）。
+
+🚢 4. 版本控制與佈署流程 (CI/CD)
+版本控制：使用 Git 管理，主要分支為 main 與 master。
+雙線同步：開發完成並驗證無誤後，需將程式碼同時同步至 main 與 master 分支。
+後端佈署：後端 Node.js 服務佈署於 Google Cloud Run。
+前端佈署：前端靜態檔案佈署於 Github Pages / Firebase Hosting。
+環境變數：機密金鑰（如 Firebase Service Account）需透過環境變數管理，不可直接 hardcode 於程式碼中。
+
+💬 5. 與 AI 的溝通準則
+先規劃後執行：在實作重大架構、資料表更動或複雜流程前，AI 必須先產出 implementation_plan.md（實作計畫），經我同意後才能修改程式碼。
+避免覆蓋與截斷：修改大檔案時，請精準定位修改範圍，絕不可無故刪除、截斷原有程式碼（特別是檔案底部的現存功能）。
+保留中文註解：在撰寫或修改程式碼時，請盡量加入清楚的繁體中文註解，幫助日後維護。

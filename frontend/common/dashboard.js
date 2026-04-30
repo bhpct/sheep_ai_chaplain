@@ -1,0 +1,612 @@
+document.addEventListener('DOMContentLoaded', () => {
+    let chaplainUid = 'anonymous_chaplain';
+    let currentHospId = new URLSearchParams(window.location.search).get('hosp') || '預設';
+    let userRole = 'chaplain'; // 預設權限
+    
+    let allCases = [];
+    let currentTab = 'pending';
+    let currentSelectedCase = null;
+
+    const casesListEl = document.getElementById('cases-list');
+    const settingsPanelEl = document.getElementById('settings-panel');
+    const hospitalsPanelEl = document.getElementById('hospitals-panel');
+    const detailModal = new bootstrap.Modal(document.getElementById('caseDetailModal'));
+
+    // 初始化 LIFF
+    async function initLiff() {
+        try {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                // 測試：自動帶入 Super Admin 的 UID
+                chaplainUid = 'U8b8bcd3867bee33a86a7063b430ebb2a';
+            } else {
+                const configRes = await fetch('/api/config');
+                const config = await configRes.json();
+                
+                await liff.init({ liffId: config.liffId });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                const profile = await liff.getProfile();
+                chaplainUid = profile.userId;
+            }
+            
+            loadCases();
+            setInterval(() => {
+                if(currentTab !== 'settings' && currentTab !== 'hospitals') loadCases();
+            }, 30000); 
+            
+        } catch (e) {
+            console.error('LIFF 初始化失敗：', e);
+            casesListEl.innerHTML = '<div class="p-4 text-danger text-center">系統初始化失敗，請稍後再試。</div>';
+        }
+    }
+
+    // 切換頁籤
+    window.switchTab = function(tabName) {
+        currentTab = tabName;
+        
+        // 更新 UI active state
+        document.querySelectorAll('#main-tabs .nav-link').forEach(el => el.classList.remove('active'));
+        if (event) {
+            const target = event.currentTarget;
+            if (target) target.classList.add('active');
+        } else {
+            document.querySelector('#main-tabs .nav-link').classList.add('active');
+        }
+        
+        const titles = { 
+            'pending': '<i class="fa-solid fa-bell text-danger"></i> 待辦案件', 
+            'active': '<i class="fa-solid fa-user-doctor text-success"></i> 處理中案件', 
+            'closed': '<i class="fa-solid fa-folder-open text-secondary"></i> 結案/未開案紀錄',
+            'settings': '<i class="fa-solid fa-users-gear text-primary"></i> 人員管理',
+            'hospitals': '<i class="fa-solid fa-hospital text-info"></i> 醫院頻道設定'
+        };
+        document.getElementById('tab-title').innerHTML = titles[tabName] || '案件列表';
+        
+        document.getElementById('list-header').style.display = 'none';
+        casesListEl.style.display = 'none';
+        settingsPanelEl.style.display = 'none';
+        hospitalsPanelEl.style.display = 'none';
+
+        if (tabName === 'settings') {
+            settingsPanelEl.style.display = 'block';
+            loadUsers();
+        } else if (tabName === 'hospitals') {
+            hospitalsPanelEl.style.display = 'block';
+            loadHospitals();
+        } else {
+            document.getElementById('list-header').style.display = 'flex';
+            casesListEl.style.display = 'block';
+            renderCases();
+        }
+    }
+
+    // 載入案件列表
+    window.loadCases = async function() {
+        try {
+            const res = await fetch(`/api/dashboard/cases?hospId=${currentHospId}&chaplainUid=${chaplainUid}`);
+            const data = await res.json();
+
+            if (data.success) {
+                userRole = data.role;
+                
+                // 未授權人員隱藏選單 (除了 UID 複製)
+                if (userRole === 'unknown') {
+                    document.getElementById('main-tabs').style.display = 'none';
+                    document.getElementById('hospitals-panel').style.display = 'none';
+                    document.getElementById('settings-panel').style.display = 'none';
+                    document.getElementById('list-header').style.display = 'none';
+                    casesListEl.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fa-solid fa-lock fa-4x text-muted mb-3 opacity-50"></i>
+                            <h4 class="text-danger fw-bold">未經授權的關懷師</h4>
+                            <p class="text-muted">您的 LINE UID 尚未綁定權限，請複製以下 UID 交給系統管理員進行開通設定。</p>
+                            <div class="bg-light p-3 rounded-3 d-inline-block border">
+                                <code class="fs-5 text-dark">${chaplainUid}</code>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 如果不是超級管理員，則隱藏特定選單
+                if (userRole !== 'super_admin' && userRole !== 'admin') {
+                    document.getElementById('tab-settings').style.display = 'none';
+                    document.getElementById('tab-hospitals').style.display = 'none';
+                }
+
+                allCases = data.cases;
+                renderCases();
+            }
+        } catch (e) {
+            console.error(e);
+            casesListEl.innerHTML = '<div class="p-4 text-danger text-center">網路連線異常，無法取得案件資料。</div>';
+        }
+    }
+
+    function renderCases() {
+        casesListEl.innerHTML = '';
+        
+        let filtered = allCases.filter(c => c.status === currentTab);
+        
+        if (currentTab === 'closed') {
+            // 包含未開案 (status=none) 以及 closed
+            filtered = allCases.filter(c => c.status === 'closed' || c.status === 'none');
+        }
+
+        if (filtered.length === 0) {
+            casesListEl.innerHTML = '<div class="text-center text-muted p-5 bg-white rounded-4 shadow-sm">目前無相關案件</div>';
+            return;
+        }
+
+        filtered.forEach(c => {
+            const card = document.createElement('div');
+            // 高風險加強顯示
+            let extraClass = '';
+            if (c.current_risk_level === 4 && c.status === 'pending') extraClass = 'bg-danger text-white risk-4 border-danger';
+            else if (c.current_risk_level === 3 && c.status === 'pending') extraClass = 'bg-warning text-dark risk-3 border-warning';
+            else extraClass = `risk-${c.current_risk_level}`;
+            
+            card.className = `card case-card p-4 mb-3 rounded-4 border-start border-4 ${extraClass}`;
+            
+            const timeStr = new Date(c.created_at).toLocaleString();
+            
+            // 刪除案件按鈕 (僅 admin/super_admin)
+            let deleteBtnHtml = '';
+            if ((userRole === 'admin' || userRole === 'super_admin') && currentTab === 'closed') {
+                deleteBtnHtml = `<button class="btn btn-sm btn-outline-danger ms-2 delete-case-btn" data-id="${c.id}"><i class="fa-solid fa-trash"></i> 刪除</button>`;
+            }
+
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0 fw-bold ${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-dark'}"><i class="fa-brands fa-line text-success fs-6"></i> ${c.patient_name || '未知病患'}</h5>
+                    <div>
+                        <small class="${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-muted'} fw-bold me-2">${timeStr}</small>
+                        ${deleteBtnHtml}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center flex-wrap">
+                    <span class="badge bg-${getRiskColor(c.current_risk_level)} me-2 mb-2 px-3 py-2 rounded-pill shadow-sm">Level ${c.current_risk_level}</span>
+                    <span class="badge bg-secondary me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-hospital"></i> ${c.hosp_id}</span>
+                    <small class="${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-secondary'} fw-bold mb-2"><i class="fa-solid fa-location-dot text-danger"></i> ${c.location || '位置未知'}</small>
+                </div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-case-btn')) {
+                    e.stopPropagation();
+                    const caseId = e.target.closest('.delete-case-btn').dataset.id;
+                    deleteCaseAPI(caseId);
+                    return;
+                }
+                openCaseDetail(c);
+            });
+            casesListEl.appendChild(card);
+        });
+    }
+
+    function getRiskColor(level) {
+        if (level === 4) return 'danger';
+        if (level === 3) return 'warning text-dark';
+        if (level === 2) return 'primary';
+        return 'success';
+    }
+
+    async function openCaseDetail(caseData) {
+        currentSelectedCase = caseData;
+        
+        document.getElementById('detail-name').innerText = caseData.patient_name || '未知';
+        document.getElementById('detail-location').innerText = caseData.location || '未提供';
+        document.getElementById('detail-risk-badge').innerHTML = `<span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm">Level ${caseData.current_risk_level}</span>`;
+        document.getElementById('detail-time').innerText = new Date(caseData.created_at).toLocaleString();
+        
+        const phoneEl = document.getElementById('detail-phone');
+        if (caseData.contact_phone) {
+            phoneEl.innerHTML = `<a href="tel:${caseData.contact_phone}" class="text-decoration-none">${caseData.contact_phone} <i class="fa-solid fa-square-phone fs-4 ms-1"></i></a>`;
+        } else {
+            phoneEl.innerHTML = '<span class="text-muted">未提供</span>';
+        }
+        
+        document.getElementById('detail-summary').innerText = caseData.ai_summary || '無摘要';
+        document.getElementById('detail-needs').innerText = caseData.ai_needs || '無預測需求';
+        
+        const shieldEl = document.getElementById('privacy-shield');
+        const privateEl = document.getElementById('private-content');
+        const actionsEl = document.getElementById('detail-actions');
+        
+        actionsEl.innerHTML = '';
+        document.getElementById('chaplain-notes').value = caseData.chaplain_notes || '';
+
+        const canViewPrivate = (userRole === 'super_admin' || userRole === 'admin') || 
+                               (caseData.status === 'active' && caseData.claimed_by === chaplainUid) ||
+                               (caseData.status === 'closed' && caseData.claimed_by === chaplainUid) || 
+                               (currentTab === 'closed'); 
+
+        if (caseData.status === 'pending' && caseData.is_opened) {
+            shieldEl.style.display = 'block';
+            privateEl.style.display = 'none';
+            actionsEl.innerHTML = `<button class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm py-2" onclick="claimCase('${caseData.id}')"><i class="fa-solid fa-hand-holding-heart"></i> 我要一鍵接案</button>`;
+        } else if (canViewPrivate) {
+            shieldEl.style.display = 'none';
+            privateEl.style.display = 'block';
+            
+            if (caseData.status === 'active') {
+                actionsEl.innerHTML = `
+                    <button class="btn btn-outline-info rounded-pill w-100 fw-bold shadow-sm py-2 mb-2" onclick="requestContact('${caseData.id}')">
+                        <i class="fa-regular fa-paper-plane"></i> 傳送關懷小卡 (索取聯絡方式)
+                    </button>
+                    <button class="btn btn-success rounded-pill w-100 fw-bold shadow-sm py-2" onclick="closeCase('${caseData.id}')">
+                        <i class="fa-solid fa-check"></i> 儲存回報並結案
+                    </button>
+                `;
+            }
+            
+            loadChatHistory(caseData.patient_uid, caseData.hosp_id);
+        } else {
+            shieldEl.style.display = 'block';
+            privateEl.style.display = 'none';
+            shieldEl.innerHTML = `
+                <div class="mb-3"><i class="fa-solid fa-lock fa-4x text-muted opacity-50"></i></div>
+                <h5 class="fw-bold text-dark">無權限查看</h5>
+                <p class="text-muted">此案件已由其他關懷師負責處理。</p>`;
+        }
+
+        detailModal.show();
+    }
+
+    async function loadChatHistory(uid, hospId) {
+        const chatContainerEl = document.getElementById('chat-history-container');
+        chatContainerEl.innerHTML = '<div class="text-center text-muted p-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i> <br><small class="mt-2 d-block">載入對話紀錄中...</small></div>';
+        
+        try {
+            const res = await fetch(`/api/chat-history?uid=${uid}&hospId=${hospId}`);
+            const data = await res.json();
+            
+            if (data.success && data.history.length > 0) {
+                chatContainerEl.innerHTML = '';
+                data.history.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = msg.role === 'user' ? 'msg-bubble msg-user shadow-sm' : 'msg-bubble msg-ai shadow-sm';
+                    div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 病患' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.content}`;
+                    chatContainerEl.appendChild(div);
+                });
+                chatContainerEl.scrollTop = chatContainerEl.scrollHeight;
+            } else {
+                chatContainerEl.innerHTML = '<div class="text-center text-muted p-3">查無近期跨院通話紀錄</div>';
+            }
+        } catch (e) {
+            chatContainerEl.innerHTML = '<div class="text-center text-danger p-3">讀取對話紀錄失敗</div>';
+        }
+    }
+
+    window.claimCase = async function(caseId) {
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}/claim`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('成功接案！', '請查看完整對話並準備介入。', 'success');
+                detailModal.hide();
+                switchTab('active');
+            } else {
+                Swal.fire('錯誤', data.message || '接案失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.requestContact = async function(caseId) {
+        Swal.fire({
+            title: '確定發送關懷小卡？',
+            text: "系統將會發送 LINE 卡片給病患索取聯絡方式。",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '確定發送',
+            cancelButtonText: '取消'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/dashboard/cases/${caseId}/request-contact`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        Swal.fire('已發送！', '關懷小卡已送出', 'success');
+                    } else {
+                        Swal.fire('錯誤', data.message || '發送失敗', 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('錯誤', '網路連線異常', 'error');
+                }
+            }
+        });
+    }
+
+    window.closeCase = async function(caseId) {
+        const notes = document.getElementById('chaplain-notes').value;
+        if (!notes) {
+            Swal.fire('提示', '請填寫關懷師回報內容再結案！', 'warning');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}/close`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chaplainUid, chaplainNotes: notes })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已結案！', '回報已儲存', 'success');
+                detailModal.hide();
+                switchTab('closed');
+            } else {
+                Swal.fire('錯誤', data.message || '結案失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.deleteCaseAPI = async function(caseId) {
+        if (!confirm('確定要刪除這筆案件與所有紀錄嗎？此動作無法復原！')) return;
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已刪除', '', 'success');
+                loadCases();
+            } else {
+                Swal.fire('錯誤', data.message || '刪除失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    // ==========================================
+    // 人員權限管理模組
+    // ==========================================
+    async function loadUsers() {
+        const listEl = document.getElementById('users-list');
+        listEl.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+        try {
+            const res = await fetch(`/api/dashboard/users?adminUid=${chaplainUid}`);
+            const data = await res.json();
+            if (data.success) {
+                renderUsers(data.users);
+            } else {
+                listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">讀取人員失敗</div>';
+            }
+        } catch (e) {
+            listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">網路錯誤</div>';
+        }
+    }
+
+    function renderUsers(users) {
+        const listEl = document.getElementById('users-list');
+        listEl.innerHTML = '';
+        users.forEach(u => {
+            const div = document.createElement('div');
+            div.className = 'col-md-6 mb-3';
+            let roleBadge = '';
+            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">總系統管理員</span>';
+            else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">醫院管理員</span>';
+            else roleBadge = '<span class="badge bg-success">關懷師</span>';
+
+            div.innerHTML = `
+                <div class="card shadow-sm border-0 h-100 rounded-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold m-0"><i class="fa-solid fa-user-circle text-muted"></i> ${u.name}</h6>
+                            ${roleBadge}
+                        </div>
+                        <small class="text-muted d-block mb-1">UID: <code>${u.uid}</code></small>
+                        <small class="text-muted d-block mb-3"><i class="fa-solid fa-hospital text-info"></i> 所屬頻道: ${u.hosp_id}</small>
+                        <button class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-bold" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除權限</button>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(div);
+        });
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const uid = document.getElementById('user-uid').value;
+        const name = document.getElementById('user-name').value;
+        const role = document.getElementById('user-role').value;
+        const hosp = document.getElementById('user-hosp').value;
+
+        try {
+            const res = await fetch(`/api/dashboard/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, uid, name, role, hospId: hosp })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('成功', '人員已儲存', 'success');
+                document.getElementById('userForm').reset();
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '儲存失敗', 'error');
+            }
+        } catch (error) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    });
+
+    window.deleteUser = async function(uid) {
+        if (!confirm('確定要移除此人的權限嗎？')) return;
+        try {
+            const res = await fetch(`/api/dashboard/users/${uid}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已刪除', '', 'success');
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '刪除失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    // ==========================================
+    // 醫院頻道管理模組
+    // ==========================================
+    async function loadHospitals() {
+        const listEl = document.getElementById('hospitals-list');
+        listEl.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+        
+        // 載入 config 取 liffId
+        let liffId = '';
+        try {
+            const cfg = await fetch('/api/config');
+            const cfgData = await cfg.json();
+            liffId = cfgData.liffId || '';
+        } catch(e) {}
+
+        try {
+            const res = await fetch(`/api/dashboard/hospitals?adminUid=${chaplainUid}`);
+            const data = await res.json();
+            if (data.success) {
+                renderHospitals(data.hospitals, liffId);
+                
+                const parentSelect = document.getElementById('hosp-parent');
+                parentSelect.innerHTML = '<option value="">(無上層醫院，獨立體系)</option>';
+                data.hospitals.forEach(h => {
+                    if (!h.parent_id) { 
+                        parentSelect.innerHTML += `<option value="${h.id}">${h.hosp_name} (${h.id})</option>`;
+                    }
+                });
+            } else {
+                listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">讀取頻道失敗</div>';
+            }
+        } catch (e) {
+            listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">網路錯誤</div>';
+        }
+    }
+
+    function renderHospitals(hospitals, liffId) {
+        const listEl = document.getElementById('hospitals-list');
+        listEl.innerHTML = '';
+        hospitals.forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'col-md-6 col-lg-4 mb-3';
+            
+            // 使用 LIFF 網址作為 QR Code 來源
+            let patientUrl = window.location.origin + '/patient_view.html?hosp=' + h.id;
+            if (liffId) {
+                patientUrl = `https://liff.line.me/${liffId}/?hosp=${h.id}`;
+            }
+
+            const parentInfo = h.parent_id ? `<br><small class="text-secondary"><i class="fa-solid fa-sitemap"></i> 上層: ${h.parent_id}</small>` : '';
+
+            div.innerHTML = `
+                <div class="card shadow-sm border-0 h-100 rounded-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-2"><i class="fa-solid fa-hospital-user text-primary"></i> ${h.hosp_name}</h6>
+                        <small class="text-muted d-block mb-3">頻道 ID: <code>${h.id}</code>${parentInfo}</small>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="deleteHospital('${h.id}')" title="刪除頻道"><i class="fa-solid fa-trash"></i></button>
+                            <button class="btn btn-outline-primary btn-sm w-100 rounded-pill" onclick="showQrCode('${h.id}', '${h.hosp_name}', '${patientUrl}')"><i class="fa-solid fa-qrcode"></i> 匯出病房 QR Code</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(div);
+        });
+    }
+
+    document.getElementById('hospitalForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('hosp-id').value;
+        const name = document.getElementById('hosp-name').value;
+        const parentId = document.getElementById('hosp-parent').value || null;
+
+        if (!id || !name) {
+            alert("請填寫完整資訊");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/dashboard/hospitals`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, hospId: id, hospName: name, parentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('成功', '醫院頻道已建立！', 'success');
+                document.getElementById('hospitalForm').reset();
+                loadHospitals();
+            } else {
+                Swal.fire('錯誤', data.message || '建立失敗', 'error');
+            }
+        } catch (error) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    });
+
+    window.deleteHospital = async function(hospId) {
+        if (!confirm(`確定要刪除該醫院頻道 ${hospId} 嗎？(這將會刪除所有案件與紀錄)`)) return;
+        try {
+            const res = await fetch(`/api/dashboard/hospitals/${hospId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已刪除', '', 'success');
+                loadHospitals();
+            } else {
+                Swal.fire('錯誤', data.message || '刪除失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    // 顯示 QR Code
+    window.showQrCode = function(hospId, hospName, url) {
+        document.getElementById('qr-modal-title').innerText = `${hospName} 專屬連結`;
+        document.getElementById('qr-url-input').value = url;
+        
+        const canvas = document.getElementById('qr-code-canvas');
+        const qr = new QRious({
+            element: canvas,
+            value: url,
+            size: 250,
+            level: 'H'
+        });
+
+        const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+        qrModal.show();
+    }
+
+    // 複製連結
+    window.copyQrUrl = function() {
+        const copyText = document.getElementById("qr-url-input");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        Swal.fire('已複製', '網址已複製！', 'success');
+    }
+
+    // 啟動
+    initLiff();
+});

@@ -1,0 +1,130 @@
+/* 全域共用樣式 */
+body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    background-color: #f8f9fa;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* 咩咪羊大頭貼樣式 */
+.sheep-head {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    transition: transform 0.1s ease-in-out;
+    border: 5px solid white;
+}
+
+/* 點頭動畫 */
+.sheep-head.nodding {
+    animation: nod 0.4s infinite alternate;
+}
+
+@keyframes nod {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(15px) rotate(5deg); }
+}
+
+/* 對話氣泡 */
+.chat-bubble-container {
+    padding: 0 15px;
+}
+
+.chat-bubble {
+    background-color: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 15px 25px;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: #444;
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    text-align: left;
+    min-height: 60px;
+}
+
+/* 氣泡的小尾巴 */
+.chat-bubble::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    margin-left: -10px;
+    border-width: 0 10px 12px 10px;
+    border-style: solid;
+    border-color: transparent transparent #e0e0e0 transparent;
+}
+.chat-bubble::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    margin-left: -8px;
+    border-width: 0 8px 10px 8px;
+    border-style: solid;
+    border-color: transparent transparent #ffffff transparent;
+}
+
+/* ====== 星星動態評分效果 ====== */
+.stars-container {
+    display: flex;
+    /* 使用 row-reverse 讓右至左的元素透過 ~ 選擇器可以由左到右亮起 */
+    flex-direction: row-reverse; 
+}
+
+.star-btn {
+    background: transparent;
+    border: none;
+    font-size: 2.5rem;
+    color: #e4e5e9; /* 預設灰白色 */
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    padding: 0 5px;
+}
+
+/* 當滑鼠移過該星星，以及該星星之後 (左側) 的所有星星，都會變亮並放大 */
+.star-btn:hover,
+.star-btn:hover ~ .star-btn {
+    color: #ffc107; /* 金黃色 */
+    transform: scale(1.2);
+}
+
+.star-btn:active {
+    transform: scale(0.9);
+}
+
+/* 正在思考的閃爍游標 */
+.typing-cursor::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 對講機按鈕樣式 */
+.walkie-talkie-btn {
+    transition: all 0.2s ease-in-out;
+    touch-action: manipulation;
+}
+
+.walkie-talkie-btn:active {
+    transform: scale(0.95);
+}
+
+/* 錄音中的脈衝動畫 */
+.recording {
+    background-color: #dc3545 !important;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}

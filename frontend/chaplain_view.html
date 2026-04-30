@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咩咪羊 關懷師面板</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-bg: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-main: #2d3748;
+        }
+
+        body { 
+            background: var(--primary-bg); 
+            background-attachment: fixed;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif; 
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .glass-navbar {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-brand img { height: 35px; margin-right: 12px; }
+        .navbar-brand { font-weight: 700; color: #4a5568 !important; }
+
+        /* Tabs Styling */
+        .nav-pills .nav-link {
+            color: #4a5568;
+            border-radius: 30px;
+            font-weight: 500;
+            padding: 10px 20px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        .nav-pills .nav-link:hover { background: rgba(255,255,255,0.5); }
+        .nav-pills .nav-link.active {
+            background: #fff;
+            color: #2b6cb0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Glassmorphism Cards */
+        .case-card { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-left: 6px solid transparent; 
+            border-radius: 16px; 
+            margin-bottom: 15px; 
+            padding: 20px;
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .case-card:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .case-card:active { transform: translateY(0); }
+        
+        .risk-4 { border-left-color: #fc8181 !important; } /* Soft Red */
+        .risk-3 { border-left-color: #f6e05e !important; } /* Soft Yellow */
+        .risk-2 { border-left-color: #63b3ed !important; } /* Soft Blue */
+        .risk-1 { border-left-color: #68d391 !important; } /* Soft Green */
+        
+        /* Modal Styling */
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-header { border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .modal-footer { border-top: 1px solid rgba(0,0,0,0.05); }
+
+        .chat-container { 
+            max-height: 450px; 
+            overflow-y: auto; 
+            padding: 20px; 
+            background: #f7fafc; 
+            border-radius: 15px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .msg-bubble { max-width: 80%; padding: 12px 18px; border-radius: 20px; margin-bottom: 12px; font-size: 0.95rem; line-height: 1.5; }
+        .msg-user { background: #c6f6d5; margin-left: auto; border-bottom-right-radius: 4px; color: #22543d; }
+        .msg-ai { background: #edf2f7; border-bottom-left-radius: 4px; color: #2d3748; }
+        
+        /* 列印用樣式 */
+        @media print {
+            .navbar, #main-tabs, .btn, .modal-footer, #list-header { display: none !important; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; min-height: 100vh; width: 100%; overflow: visible !important; }
+            .modal-dialog { max-width: 100%; margin: 0; }
+            .modal-content { border: none; box-shadow: none; background: white; border-radius: 0; }
+            .modal-body { overflow: visible !important; height: auto !important; }
+            .chat-container { max-height: none !important; overflow: visible !important; height: auto !important; border: none; background: white; page-break-inside: avoid; }
+            .card { box-shadow: none !important; border: 1px solid #eee !important; page-break-inside: avoid; }
+            .msg-bubble { page-break-inside: avoid; }
+        }
+
+        /* Settings Table */
+        .table-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .table-glass th { background: rgba(255,255,255,0.5); font-weight: 600; color: #4a5568; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg glass-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+        <img src="common/miemie_sheep.png" alt="Logo" class="rounded-circle shadow-sm">
+        咩咪羊 關懷師面板
+    </a>
+    <div class="d-flex align-items-center">
+        <span class="badge bg-light text-dark shadow-sm px-3 py-2 rounded-pill border" id="chaplain-info">
+            <i class="fa-solid fa-spinner fa-spin"></i> 載入中...
+        </span>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- RWD 頁籤 -->
+    <div class="d-flex justify-content-center mb-4">
+        <ul class="nav nav-pills" id="main-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" onclick="switchTab('pending')"><i class="fa-solid fa-bell"></i> 待辦案件 <span class="badge bg-danger rounded-pill ms-1 shadow-sm" id="badge-pending">0</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="switchTab('active')"><i class="fa-solid fa-user-doctor"></i> 處理中 <span class="badge bg-success rounded-pill ms-1 shadow-sm" id="badge-active">0</span></a>
+            </li>
+            <li class="nav-item d-none" id="tab-admin">
+                <a class="nav-link" href="#" onclick="switchTab('closed')"><i class="fa-solid fa-folder-open"></i> 歷史/未開案</a>
+            </li>
+            <li class="nav-item d-none" id="tab-settings">
+                <a class="nav-link" href="#" onclick="switchTab('settings')"><i class="fa-solid fa-users-gear"></i> 人員管理</a>
+            </li>
+            <li class="nav-item d-none" id="tab-hospitals">
+                <a class="nav-link" href="#" onclick="switchTab('hospitals')"><i class="fa-solid fa-hospital"></i> 醫院頻道</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 列表標題與說明 -->
+    <div class="d-flex justify-content-between align-items-center mb-3" id="list-header">
+        <h5 class="m-0 text-dark fw-bold" id="tab-title">待辦案件</h5>
+        <button class="btn btn-light rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#helpModal" title="開案等級說明">
+            <i class="fa-solid fa-question text-info"></i>
+        </button>
+    </div>
+
+    <!-- 案件列表區 -->
+    <div id="cases-list">
+        <div class="text-center text-muted py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>
+    </div>
+
+    <!-- 人員設定頁面區 (預設隱藏) -->
+    <div id="settings-panel" style="display: none;">
+        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-user-plus text-primary"></i> 新增/修改人員權限</h5>
+                <form id="user-form" onsubmit="saveUser(event)">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">LINE UID</label>
+                            <input type="text" class="form-control rounded-pill" id="form-uid" required placeholder="U1234567890...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">顯示名稱</label>
+                            <input type="text" class="form-control rounded-pill" id="form-name" required placeholder="例如：王小明 關懷師">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">所屬分院</label>
+                            <input type="text" class="form-control rounded-pill" id="form-hosp" required placeholder="例如：CCH-YL">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">角色權限</label>
+                            <select class="form-select rounded-pill" id="form-role" required>
+                                <option value="chaplain">關懷師 (Chaplain)</option>
+                                <option value="admin">管理員 (Admin)</option>
+                                <option value="super_admin" id="opt-superadmin">超級管理員</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 儲存</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary"></i> 目前人員名單</h5>
+        <div class="table-responsive table-glass shadow-sm">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="border-0">名稱</th>
+                        <th class="border-0">角色</th>
+                        <th class="border-0">所屬分院</th>
+                        <th class="border-0">LINE UID</th>
+                        <th class="border-0 text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <tr><td colspan="6" class="text-center py-4 text-muted">載入中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 醫院頻道頁面區 (預設隱藏) -->
+    <div id="hospitals-panel" style="display: none;">
+        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-square-plus text-primary"></i> 新增醫院頻道</h5>
+                <form id="hosp-form" onsubmit="saveHospital(event)">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">頻道代碼 (Hospital ID)</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-id" required placeholder="例如：CCH-MAIN">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">對外顯示名稱</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例如：彰基 (總院)">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">上層醫院 (可選)</label>
+                            <select class="form-select rounded-pill" id="hosp-parent">
+                                <option value="">無 (獨立體系)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 建立頻道</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-building text-primary"></i> 頻道管理與 QR Code</h5>
+        <div class="row" id="hospitals-list">
+            <div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 說明 Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info text-info"></i> 緊急等級 (Risk Level) 說明</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted mb-4">系統由 AI 透過語音內容自動進行 BSRS-5 與 C-SSRS 隱式檢傷評估：</p>
+        <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fff5f5; border-left: 4px solid #fc8181;">
+            <div><span class="badge bg-danger fs-6 mb-1">Level 4 (紅)</span><br><small class="text-dark">極高風險。透露輕生念頭或嚴重暴力傾向，系統會立刻發送全域警報。</small></div>
+        </div>
+        <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fffff0; border-left: 4px solid #f6e05e;">
+            <div><span class="badge bg-warning text-dark fs-6 mb-1">Level 3 (黃)</span><br><small class="text-dark">高風險。嚴重憂鬱或絕望，強烈需要介入。</small></div>
+        </div>
+        <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #ebf8ff; border-left: 4px solid #63b3ed;">
+            <div><span class="badge bg-primary fs-6 mb-1">Level 2 (藍)</span><br><small class="text-dark">中風險。有明顯情緒困擾或睡眠障礙，達開案標準。</small></div>
+        </div>
+        <div class="d-flex align-items-center p-3 rounded-3" style="background: #f0fff4; border-left: 4px solid #68d391;">
+            <div><span class="badge bg-success fs-6 mb-1">Level 1 (綠)</span><br><small class="text-dark">低風險。情緒平穩，系統暫不開案，列入未開案紀錄區。</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 案件詳情 Modal (RWD 全螢幕/彈窗) -->
+<div class="modal fade" id="caseDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-md-down">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold" id="detail-title">案件詳情</h5>
+        <div>
+            <button class="btn btn-light rounded-circle shadow-sm me-2" onclick="window.print()" title="列印病歷"><i class="fa-solid fa-print"></i></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        
+        <!-- 基本資訊卡片 -->
+        <div class="card mb-4 border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-6 col-md-4 mb-2">
+                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 病患名稱</small>
+                        <strong class="fs-5" id="detail-name">-</strong>
+                    </div>
+                    <div class="col-6 col-md-4 mb-2">
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 所在位置</small>
+                        <strong class="fs-5" id="detail-location">-</strong>
+                    </div>
+                    <div class="col-6 col-md-4 mb-2">
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-phone text-info"></i> 聯絡電話</small>
+                        <span id="detail-phone" class="fs-5 fw-bold">-</span>
+                    </div>
+                    <div class="col-6 col-md-6">
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-heart-pulse text-primary"></i> 風險評估</small>
+                        <span id="detail-risk-badge"></span>
+                    </div>
+                    <div class="col-6 col-md-6">
+                        <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 立案時間</small>
+                        <strong id="detail-time">-</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 摘要卡片 -->
+        <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-robot"></i> AI 現況摘要</h6>
+                <p class="mb-4 text-dark" id="detail-summary" style="line-height: 1.6;">-</p>
+                
+                <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-hand-holding-heart"></i> AI 預判需求</h6>
+                <p class="mb-0 text-dark" id="detail-needs" style="line-height: 1.6;">-</p>
+            </div>
+        </div>
+
+        <!-- 對話紀錄與回報區 (隱私遮蔽) -->
+        <div id="privacy-shield" class="text-center py-5">
+            <div class="mb-3">
+                <i class="fa-solid fa-shield-halved fa-4x text-primary opacity-50"></i>
+            </div>
+            <h5 class="fw-bold text-dark">詳細資料已被隱私保護</h5>
+            <p class="text-muted mb-0">點擊下方「一鍵接案」按鈕，才能解鎖並查看完整對話與填寫回報。</p>
+        </div>
+
+        <div id="private-content" style="display: none;">
+            <!-- 完整對話紀錄 -->
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-regular fa-comments text-info"></i> 近 90 天跨院區對話紀錄</h6>
+            <div class="chat-container mb-4 shadow-sm" id="chat-history-container"></div>
+
+            <!-- 關懷師回報表單 -->
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-pen-to-square text-warning"></i> 關懷師回報 (Chaplain Notes)</h6>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-0">
+                    <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此記錄您的關懷過程、病患反應與後續建議..."></textarea>
+                </div>
+            </div>
+        </div>
+
+      </div>
+      <div class="modal-footer bg-white border-top-0 p-3" id="detail-actions">
+        <!-- 動態按鈕 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center border-0" style="border-radius: 20px;">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold" id="qr-modal-title">頻道 QR Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-5 bg-white">
+        <h4 class="mb-4 fw-bold text-dark" id="qr-hosp-name">醫院名稱</h4>
+        <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-4">
+            <canvas id="qrcode-canvas"></canvas>
+        </div>
+        <p class="text-muted small">請病患用 LINE 掃描上方 QR Code 進入專屬關懷頻道</p>
+        <div class="input-group">
+            <input type="text" class="form-control text-center" id="qr-url" readonly>
+            <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LINE LIFF SDK & Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<!-- QRious for QR Code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="common/dashboard.js?v=7"></script>
+</body>
+</html>

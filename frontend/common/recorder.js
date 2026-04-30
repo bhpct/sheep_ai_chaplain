@@ -1,0 +1,291 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const recordButton = document.getElementById('recordButton');
+    const sheepAvatar = document.getElementById('sheepAvatar');
+    const chatBubble = document.getElementById('chatBubble');
+    const interactiveWidget = document.getElementById('interactiveWidget');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    
+    // 全域對話記憶體與 UID
+    let conversationHistory = [];
+    let lineUid = 'anonymous_uid';
+    let userDisplayName = '未知訪客';
+    
+    let audioContext;
+    let analyser;
+    let microphone;
+    let javascriptNode;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const hospId = urlParams.get('hosp') || '預設';
+    
+    // 動態取得醫院真實名稱
+    fetch(`/api/dashboard/hospitals?hospId=${hospId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.hospName) {
+                document.getElementById('hosp-welcome').innerText = `目前位於 ${data.hospName} 專屬關懷頻道`;
+            } else {
+                document.getElementById('hosp-welcome').innerText = `目前位於 ${hospId} 專屬關懷頻道`;
+            }
+        })
+        .catch(() => {
+            document.getElementById('hosp-welcome').innerText = `目前位於 ${hospId} 專屬關懷頻道`;
+        });
+    // 打字機效果
+    function typeText(text, callback) {
+        chatBubble.innerHTML = '<span class="typing-cursor"></span>';
+        let index = 0;
+        chatBubble.innerHTML = '';
+        
+        function type() {
+            if (index < text.length) {
+                chatBubble.innerHTML = text.substring(0, index + 1) + '<span class="typing-cursor"></span>';
+                index++;
+                setTimeout(type, 50); 
+            } else {
+                chatBubble.innerHTML = text; 
+                if (callback) callback();
+            }
+        }
+        type();
+    }
+
+    // 初始化 LIFF 與歷史對話紀錄
+    async function initLiffAndHistory() {
+        try {
+            // 本地端自動模擬 UID 方便測試
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log("本地端開發模式：使用模擬 UID");
+                lineUid = 'mock_uid_123';
+                userDisplayName = '測試病患(Mock)';
+            } else {
+                // 從後端取得 LIFF ID
+                const configRes = await fetch('/api/config');
+                const config = await configRes.json();
+                const LIFF_ID = config.liffId;
+
+                if (!LIFF_ID) {
+                    console.error("尚未設定 LIFF ID");
+                    chatBubble.innerHTML = "系統尚未完成 LINE 連線設定。";
+                    return;
+                }
+
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                const profile = await liff.getProfile();
+                lineUid = profile.userId;
+                userDisplayName = profile.displayName;
+            }
+            
+            await loadChatHistory();
+        } catch (err) {
+            console.error("LIFF 初始化失敗:", err);
+            chatBubble.innerHTML = "系統連線異常，請稍後再試。";
+        }
+    }
+
+    // 載入該 UID 在該醫院過去 7 天的歷史紀錄
+    async function loadChatHistory() {
+        try {
+            chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊正在回憶...</span>';
+            const res = await fetch(`/api/chat-history?uid=${lineUid}&hospId=${hospId}`);
+            const result = await res.json();
+            
+            if (result.success && result.history.length > 0) {
+                conversationHistory = result.history;
+                // 顯示最後一句 AI 的話
+                const lastModelMsg = conversationHistory.filter(h => h.role === 'model').pop();
+                if (lastModelMsg) {
+                    typeText("歡迎回來！" + lastModelMsg.text);
+                } else {
+                    typeText("嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？");
+                }
+            } else {
+                typeText("嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？");
+            }
+        } catch (e) {
+            console.error("讀取歷史失敗:", e);
+            typeText("嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？");
+        }
+    }
+
+    // 呼叫初始化
+    initLiffAndHistory();
+
+    // 發送資料至後端 (夾帶 UID 與歷史記憶體)
+    async function sendToBackend(formData) {
+        chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊正在整理思緒...</span>';
+        interactiveWidget.style.display = 'none';
+
+        formData.append('lineUid', lineUid); // 綁定 UID
+        formData.append('displayName', userDisplayName);
+        formData.append('history', JSON.stringify(conversationHistory));
+
+        try {
+            const response = await fetch('/api/analyze-audio', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 將此回合對話存入前端記憶體
+                conversationHistory.push({ role: 'user', text: result.data.transcript });
+                conversationHistory.push({ role: 'model', text: result.data.ai_response });
+
+                typeText(result.data.ai_response, () => {
+                    if (result.data.widget_action === 'mood_stars') {
+                        interactiveWidget.style.display = 'block';
+                    }
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            console.error("發送失敗:", err);
+            chatBubble.innerHTML = "抱歉，咩咪羊剛剛走神了，可以請您再說一次嗎？";
+        }
+    }
+
+    // 星星點擊事件
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const btnEl = e.target.closest('.star-btn');
+            const score = btnEl.getAttribute('data-val');
+            interactiveWidget.style.display = 'none';
+            chatBubble.innerHTML = `(您給了 ${score} 顆星)`;
+            
+            const formData = new FormData();
+            formData.append('hospId', hospId);
+            formData.append('text', `使用者剛才點擊了心情星星評分：${score} 顆星。請以此分數接續關心。`);
+            
+            sendToBackend(formData);
+        });
+    });
+
+    async function initAudio() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioChunks = []; 
+                
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                formData.append('hospId', hospId);
+
+                sendToBackend(formData);
+            };
+
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            
+            javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+            analyser.connect(javascriptNode);
+            javascriptNode.connect(audioContext.destination);
+            
+            javascriptNode.onaudioprocess = () => {
+                if (!isRecording) return; 
+                
+                const array = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(array);
+                
+                let sum = 0;
+                for (let i = 0; i < array.length; i++) {
+                    sum += array[i];
+                }
+                const averageVolume = sum / array.length;
+                
+                if (averageVolume > 20) {
+                    sheepAvatar.classList.add('nodding');
+                } else {
+                    sheepAvatar.classList.remove('nodding');
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            chatBubble.innerHTML = "請允許使用麥克風才能說話喔！";
+        }
+    }
+
+    const startRecording = async (e) => {
+        if(e.type !== 'touchstart' && e.button !== 0) return; 
+        e.preventDefault(); 
+        
+        if (isRecording) return;
+        
+        if (!mediaRecorder) {
+            await initAudio(); 
+            if (!mediaRecorder) return; 
+        }
+
+        try {
+            audioChunks = [];
+            mediaRecorder.start();
+            isRecording = true;
+            recordButton.classList.add('recording');
+            recordButton.innerHTML = '<span style="font-size: 1.5rem;">⏳ 錄音中... 放開傳送</span>';
+            chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊專心聽您說...</span>';
+            interactiveWidget.style.display = 'none';
+            playBeep();
+        } catch (err) {
+            console.error("錄音啟動失敗:", err);
+        }
+    };
+
+    const stopRecording = (e) => {
+        if (!isRecording || !mediaRecorder) return;
+
+        try {
+            mediaRecorder.stop();
+            isRecording = false;
+            recordButton.classList.remove('recording');
+            recordButton.innerHTML = '<span style="font-size: 1.5rem;">🎤 按住說話</span>';
+            sheepAvatar.classList.remove('nodding'); 
+        } catch (err) {
+            console.error("停止錄音失敗:", err);
+        }
+    };
+
+    function playBeep() {
+        if (!audioContext) return;
+        if(audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        const osc = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 800; 
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); 
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.1); 
+    }
+
+    recordButton.addEventListener('mousedown', startRecording);
+    window.addEventListener('mouseup', stopRecording); 
+    recordButton.addEventListener('touchstart', startRecording, { passive: false });
+    window.addEventListener('touchend', stopRecording);
+});
