@@ -6,7 +6,16 @@ const path = require('path');
 if (!admin.apps.length) {
     let serviceAccount;
 
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+        // 從 Base64 環境變數讀取 (最安全，不會有換行字元遺失的問題)
+        try {
+            const decodedStr = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
+            serviceAccount = JSON.parse(decodedStr);
+        } catch (e) {
+            console.error('❌ 解析 FIREBASE_SERVICE_ACCOUNT_BASE64 失敗', e);
+            process.exit(1);
+        }
+    } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         // 從環境變數讀取 JSON 字串 (適合 Cloud Run)
         try {
             serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
