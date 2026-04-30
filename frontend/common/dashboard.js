@@ -422,55 +422,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // 人員權限管理模組
     // ==========================================
     async function loadUsers() {
-        const listEl = document.getElementById('users-list');
-        listEl.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+        const tbodyEl = document.getElementById('users-table-body');
+        const hospSelect = document.getElementById('form-hosp');
+        tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</td></tr>';
+        
         try {
-            const res = await fetch(`/api/dashboard/users?adminUid=${chaplainUid}`);
-            const data = await res.json();
-            if (data.success) {
-                renderUsers(data.users);
+            // 同時取得人員與醫院名單
+            const [usersRes, hospRes] = await Promise.all([
+                fetch(`/api/dashboard/users?adminUid=${chaplainUid}`),
+                fetch(`/api/dashboard/hospitals?adminUid=${chaplainUid}`)
+            ]);
+            
+            const usersData = await usersRes.json();
+            const hospData = await hospRes.json();
+
+            // 更新醫院下拉選單
+            if (hospData.success) {
+                hospSelect.innerHTML = '<option value="">請選擇分院</option>';
+                hospData.hospitals.forEach(h => {
+                    hospSelect.innerHTML += `<option value="${h.id}">${h.hosp_name} (${h.id})</option>`;
+                });
+            }
+
+            if (usersData.success) {
+                renderUsers(usersData.users);
             } else {
-                listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">讀取人員失敗</div>';
+                tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">讀取人員失敗</td></tr>';
             }
         } catch (e) {
-            listEl.innerHTML = '<div class="col-12 text-center text-danger py-4">網路錯誤</div>';
+            tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">網路錯誤</td></tr>';
         }
     }
 
     function renderUsers(users) {
-        const listEl = document.getElementById('users-list');
-        listEl.innerHTML = '';
+        const tbodyEl = document.getElementById('users-table-body');
+        tbodyEl.innerHTML = '';
+        
+        if (users.length === 0) {
+            tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">目前沒有人員資料</td></tr>';
+            return;
+        }
+
         users.forEach(u => {
-            const div = document.createElement('div');
-            div.className = 'col-md-6 mb-3';
+            const tr = document.createElement('tr');
             let roleBadge = '';
-            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">總系統管理員</span>';
+            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">總管理員</span>';
             else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">醫院管理員</span>';
             else roleBadge = '<span class="badge bg-success">關懷師</span>';
 
-            div.innerHTML = `
-                <div class="card shadow-sm border-0 h-100 rounded-4">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold m-0"><i class="fa-solid fa-user-circle text-muted"></i> ${u.name}</h6>
-                            ${roleBadge}
-                        </div>
-                        <small class="text-muted d-block mb-1">UID: <code>${u.uid}</code></small>
-                        <small class="text-muted d-block mb-3"><i class="fa-solid fa-hospital text-info"></i> 所屬頻道: ${u.hosp_id}</small>
-                        <button class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-bold" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除權限</button>
-                    </div>
-                </div>
+            tr.innerHTML = `
+                <td class="fw-bold"><i class="fa-solid fa-user-circle text-muted me-2"></i>${u.name || '未知名稱'}</td>
+                <td>${roleBadge}</td>
+                <td><span class="badge bg-secondary"><i class="fa-solid fa-hospital"></i> ${u.hosp_id || '未綁定'}</span></td>
+                <td><code>${u.uid}</code></td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
+                </td>
             `;
-            listEl.appendChild(div);
+            tbodyEl.appendChild(tr);
         });
     }
 
     document.getElementById('user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const uid = document.getElementById('user-uid').value;
-        const name = document.getElementById('user-name').value;
-        const role = document.getElementById('user-role').value;
-        const hosp = document.getElementById('user-hosp').value;
+        const uid = document.getElementById('form-uid').value;
+        const name = document.getElementById('form-name').value;
+        const role = document.getElementById('form-role').value;
+        const hosp = document.getElementById('form-hosp').value;
 
         try {
             const res = await fetch(`/api/dashboard/users`, {

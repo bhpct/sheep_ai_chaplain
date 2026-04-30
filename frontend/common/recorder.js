@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let javascriptNode;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const hospId = urlParams.get('hosp') || '預設';
+    const hospId = urlParams.get('hosp') || '彰化基督教醫院（總院）';
     
     // 動態取得醫院真實名稱
     fetch(`/api/dashboard/hospitals?hospId=${hospId}`)
