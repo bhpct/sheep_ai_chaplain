@@ -110,10 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // 如果不是超級管理員，則隱藏特定選單
-                if (userRole !== 'super_admin' && userRole !== 'admin') {
-                    document.getElementById('tab-settings').style.display = 'none';
-                    document.getElementById('tab-hospitals').style.display = 'none';
+                // 根據身分解除隱藏頁籤
+                if (userRole === 'super_admin' || userRole === 'admin') {
+                    document.getElementById('tab-settings').classList.remove('d-none');
+                    document.getElementById('tab-hospitals').classList.remove('d-none');
+                    document.getElementById('tab-admin').classList.remove('d-none');
+                } else if (userRole === 'chaplain') {
+                    document.getElementById('tab-admin').classList.remove('d-none'); // 關懷師可能也需要看歷史紀錄？或者看需求
                 }
 
                 // 更新右上角資訊
