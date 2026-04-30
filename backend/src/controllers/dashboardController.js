@@ -4,7 +4,7 @@ const { admin, db } = require('../config/firebaseAdmin');
 async function verifyRole(uid) {
     if (!uid) return { role: 'unknown' };
     const doc = await db.collection('Users').doc(uid).get();
-    if (!doc.exists) return { role: 'chaplain', hosp_id: '預設' }; // 開發期 fallback
+    if (!doc.exists) return { role: 'unknown' };
     return doc.data();
 }
 
