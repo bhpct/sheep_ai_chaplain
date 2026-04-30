@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 更新右上角資訊
                 let roleName = '關懷師';
                 let roleIcon = '<i class="fa-solid fa-user-nurse text-success"></i>';
-                if (userRole === 'super_admin') { roleName = '總管理員'; roleIcon = '<i class="fa-solid fa-crown text-danger"></i>'; }
-                if (userRole === 'admin') { roleName = '醫院管理員'; roleIcon = '<i class="fa-solid fa-user-tie text-primary"></i>'; }
+                if (userRole === 'super_admin') { roleName = '超級管理員'; roleIcon = '<i class="fa-solid fa-crown text-danger"></i>'; }
+                if (userRole === 'admin') { roleName = '最高管理員'; roleIcon = '<i class="fa-solid fa-user-tie text-primary"></i>'; }
                 
                 document.getElementById('chaplain-info').innerHTML = `${roleIcon} ${roleName} | 頻道: ${currentHospId}`;
 
@@ -466,8 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
         users.forEach(u => {
             const tr = document.createElement('tr');
             let roleBadge = '';
-            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">總管理員</span>';
-            else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">醫院管理員</span>';
+            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">超級管理員</span>';
+            else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">最高管理員</span>';
             else roleBadge = '<span class="badge bg-success">關懷師</span>';
 
             tr.innerHTML = `
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/api/dashboard/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminUid: chaplainUid, uid, name, role, hospId: hosp })
+                body: JSON.stringify({ adminUid: chaplainUid, lineUid: uid, displayName: name, role, hospId: hosp })
             });
             const data = await res.json();
             if (data.success) {

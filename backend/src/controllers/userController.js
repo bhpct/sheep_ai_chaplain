@@ -22,6 +22,7 @@ async function getUsers(req, res) {
         let users = [];
         snapshot.forEach(doc => {
             const u = doc.data();
+            u.uid = doc.id; // 確保前端可以拿到正確的 uid
             // 如果是 admin，只能看到同體系的。super_admin 看全部。
             if (caller.role === 'super_admin' || (u.hosp_id && u.hosp_id.startsWith(caller.hosp_id.split('-')[0]))) {
                 users.push(u);
