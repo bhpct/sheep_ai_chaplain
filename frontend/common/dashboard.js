@@ -116,6 +116,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('tab-hospitals').style.display = 'none';
                 }
 
+                // 更新右上角資訊
+                let roleName = '關懷師';
+                let roleIcon = '<i class="fa-solid fa-user-nurse text-success"></i>';
+                if (userRole === 'super_admin') { roleName = '總管理員'; roleIcon = '<i class="fa-solid fa-crown text-danger"></i>'; }
+                if (userRole === 'admin') { roleName = '醫院管理員'; roleIcon = '<i class="fa-solid fa-user-tie text-primary"></i>'; }
+                
+                document.getElementById('chaplain-info').innerHTML = `${roleIcon} ${roleName} | 頻道: ${currentHospId}`;
+
                 allCases = data.cases;
                 renderCases();
             }
