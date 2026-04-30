@@ -1,7 +1,7 @@
 const { admin, db } = require('../src/config/firebaseAdmin');
 
 async function seedSuperAdmin() {
-    const superAdminUid = 'U8b8bcd3867bee33a86a7063b430ebb2a';
+    const superAdminUid = 'U03cbd4480cec1268f98ef8c762f6e88e';
     
     try {
         const userRef = db.collection('Users').doc(superAdminUid);

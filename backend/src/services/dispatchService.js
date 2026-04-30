@@ -100,6 +100,27 @@ async function runDispatchEngine() {
             });
         }
     }
+
+    // 2. 掃描所有 status 為 'none' 的案件，超過 24 小時無對話則自動結案
+    const noneCases = await db.collection('Cases').where('status', '==', 'none').get();
+    for (const doc of noneCases.docs) {
+        const caseData = doc.data();
+        let lastUpdated = now;
+        if (caseData.updated_at) {
+            lastUpdated = caseData.updated_at.toDate();
+        } else if (caseData.created_at) {
+            lastUpdated = caseData.created_at.toDate();
+        }
+
+        const diffHours = (now - lastUpdated) / 1000 / 60 / 60;
+        if (diffHours >= 24) {
+            console.log(`[系統日誌] 案件 ${doc.id} (Level 1) 超過 24 小時未活動，自動結案！`);
+            await doc.ref.update({
+                status: 'closed',
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
 }
 
 // 啟動排程 (每分鐘跑一次)

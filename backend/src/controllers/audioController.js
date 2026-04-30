@@ -126,18 +126,24 @@ async function handleAudioUpload(req, res) {
         const activeCaseSnapshot = await casesRef
             .where('patient_uid', '==', lineUid)
             .where('hosp_id', '==', hospId)
-            .where('status', 'in', ['pending', 'active'])
+            .where('status', 'in', ['pending', 'active', 'none'])
             .get();
 
         if (activeCaseSnapshot.empty) {
-            // 新案件：執行輪派指派
-            const assignedChaplainUid = await assignCaseRoundRobin(hospId);
+            // 新案件
+            let assignedChaplainUid = null;
+            let initialStatus = 'none';
+
+            if (isOpened) {
+                initialStatus = 'pending';
+                assignedChaplainUid = await assignCaseRoundRobin(hospId);
+            }
             
             const newCaseData = {
                 patient_uid: lineUid,
                 patient_name: displayName,
                 hosp_id: hospId,
-                status: 'pending',
+                status: initialStatus,
                 current_risk_level: analysisResult.risk_level,
                 is_opened: isOpened,
                 location: analysisResult.location || null,
@@ -164,7 +170,20 @@ async function handleAudioUpload(req, res) {
             const caseDoc = activeCaseSnapshot.docs[0];
             const currentData = caseDoc.data();
             
+            let newStatus = currentData.status;
+            let newlyAssignedUid = currentData.assigned_to;
+            let justOpened = false;
+
+            // 如果原本是未開案，但這次對話達標了，升級為 pending 並觸發派案
+            if (currentData.status === 'none' && isOpened) {
+                newStatus = 'pending';
+                justOpened = true;
+                newlyAssignedUid = await assignCaseRoundRobin(hospId);
+            }
+
             await caseDoc.ref.update({
+                status: newStatus,
+                assigned_to: newlyAssignedUid,
                 current_risk_level: analysisResult.risk_level, // 以最新的風險為主
                 is_opened: currentData.is_opened || isOpened, // 只要曾經達標就維持開案
                 ai_summary: analysisResult.ai_summary || currentData.ai_summary,
@@ -174,6 +193,11 @@ async function handleAudioUpload(req, res) {
                 latest_transcript: logData.transcript,
                 latest_ai_response: logData.ai_response
             });
+
+            // 如果是這次才觸發開案，補送推播
+            if (justOpened && newlyAssignedUid) {
+                sendLinePush(newlyAssignedUid, `[狀態升級派案] 病患 ${displayName} 的案件已升級為 Level ${analysisResult.risk_level}，請盡速前往關懷師面板接案！`);
+            }
         }
         // ================================
 

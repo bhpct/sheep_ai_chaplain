@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
+    let recordStartTime = 0;
+    let ignoreCurrentRecording = false;
     
     // 全域對話記憶體與 UID
     let conversationHistory = [];
@@ -183,6 +185,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             mediaRecorder.onstop = () => {
+                if (ignoreCurrentRecording) {
+                    audioChunks = [];
+                    return;
+                }
+
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 audioChunks = []; 
                 
@@ -230,8 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const startRecording = async (e) => {
-        if(e.type !== 'touchstart' && e.button !== 0) return; 
-        e.preventDefault(); 
+        // 排除點擊到星星按鈕或其他 UI 元件的情況
+        if (e.target.closest('.star-btn') || e.target.closest('.swal2-container')) return;
+        
+        if (e.type !== 'touchstart' && e.button !== 0) return; 
         
         if (isRecording) return;
         
@@ -242,8 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             audioChunks = [];
+            ignoreCurrentRecording = false;
             mediaRecorder.start();
             isRecording = true;
+            recordStartTime = Date.now();
+            
             recordButton.classList.add('recording');
             recordButton.innerHTML = '<span style="font-size: 1.5rem;">⏳ 錄音中... 放開傳送</span>';
             chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊專心聽您說...</span>';
@@ -258,10 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isRecording || !mediaRecorder) return;
 
         try {
+            const duration = Date.now() - recordStartTime;
+            if (duration < 2000) {
+                ignoreCurrentRecording = true;
+                Swal.fire('錄音太短', '請至少按住螢幕 2 秒以上喔！', 'warning');
+                chatBubble.innerHTML = "嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？";
+            }
+
             mediaRecorder.stop();
             isRecording = false;
             recordButton.classList.remove('recording');
-            recordButton.innerHTML = '<span style="font-size: 1.5rem;">🎤 按住說話</span>';
+            recordButton.innerHTML = '<span style="font-size: 1.5rem;">🎤 點擊螢幕任何一處按住說話</span>';
             sheepAvatar.classList.remove('nodding'); 
         } catch (err) {
             console.error("停止錄音失敗:", err);
@@ -284,8 +303,19 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.stop(audioContext.currentTime + 0.1); 
     }
 
-    recordButton.addEventListener('mousedown', startRecording);
+    // 改為綁定整個 document.body 來實現任意點擊觸發
+    document.body.addEventListener('mousedown', startRecording);
     window.addEventListener('mouseup', stopRecording); 
-    recordButton.addEventListener('touchstart', startRecording, { passive: false });
+    document.body.addEventListener('touchstart', startRecording, { passive: false });
     window.addEventListener('touchend', stopRecording);
+
+    // 防止右鍵選單與長按選取干擾
+    document.body.addEventListener('contextmenu', e => e.preventDefault());
+    
+    // 初始化時就嘗試取得一次麥克風權限 (一勞永逸)
+    setTimeout(() => {
+        if (!mediaRecorder) {
+            initAudio();
+        }
+    }, 1500);
 });

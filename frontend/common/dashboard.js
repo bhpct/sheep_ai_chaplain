@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 刪除案件按鈕 (僅 admin/super_admin)
             let deleteBtnHtml = '';
-            if ((userRole === 'admin' || userRole === 'super_admin') && currentTab === 'closed') {
+            if (userRole === 'admin' || userRole === 'super_admin') {
                 deleteBtnHtml = `<button class="btn btn-sm btn-outline-danger ms-2 delete-case-btn" data-id="${c.id}"><i class="fa-solid fa-trash"></i> 刪除</button>`;
             }
 
@@ -261,6 +261,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="mb-3"><i class="fa-solid fa-lock fa-4x text-muted opacity-50"></i></div>
                 <h5 class="fw-bold text-dark">無權限查看</h5>
                 <p class="text-muted">此案件已由其他關懷師負責處理。</p>`;
+        }
+
+        // 渲染手動派案區塊
+        const assignContainer = document.getElementById('manual-assign-container');
+        if ((userRole === 'admin' || userRole === 'super_admin') && (caseData.status === 'pending' || caseData.status === 'active' || caseData.status === 'none')) {
+            assignContainer.style.display = 'block';
+            assignContainer.innerHTML = `<div class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> 載入關懷師名單...</div>`;
+            
+            try {
+                const res = await fetch(`/api/dashboard/chaplains?hospId=${caseData.hosp_id}`);
+                const data = await res.json();
+                if (data.success && data.chaplains.length > 0) {
+                    let options = '<option value="">請選擇要指派的關懷師</option>';
+                    data.chaplains.forEach(c => {
+                        options += `<option value="${c.uid}">${c.name}</option>`;
+                    });
+                    
+                    assignContainer.innerHTML = `
+                        <div class="card border-0 bg-light p-3 rounded-4 shadow-sm mt-3">
+                            <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-handshake-angle"></i> 管理員手動派案</h6>
+                            <div class="input-group">
+                                <select class="form-select rounded-start-pill" id="manual-assign-select">
+                                    ${options}
+                                </select>
+                                <button class="btn btn-primary rounded-end-pill px-4" onclick="assignCaseManual('${caseData.id}')"><i class="fa-solid fa-paper-plane"></i> 指派</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    assignContainer.innerHTML = `<div class="alert alert-warning m-0">該醫院尚未建立關懷師名單，無法指派。</div>`;
+                }
+            } catch (err) {
+                assignContainer.innerHTML = `<div class="alert alert-danger m-0">讀取關懷師名單失敗</div>`;
+            }
+        } else {
+            assignContainer.style.display = 'none';
         }
 
         detailModal.show();

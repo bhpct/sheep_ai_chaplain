@@ -197,5 +197,65 @@ async function submitContact(req, res) {
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
     }
 }
+// 取得特定醫院的關懷師列表
+async function getChaplains(req, res) {
+    try {
+        const { hospId } = req.query;
+        if (!hospId) return res.status(400).json({ success: false, message: 'Missing hospId' });
 
-module.exports = { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact };
+        const snapshot = await db.collection('Users').where('hosp_id', '==', hospId).get();
+        let chaplains = [];
+        snapshot.forEach(doc => {
+            chaplains.push({ uid: doc.id, name: doc.data().displayName || doc.data().name || '未知關懷師' });
+        });
+
+        // 加入超級管理員或總院管理員 (如果有跨院支援需求)
+        const adminSnap = await db.collection('Users').where('role', 'in', ['super_admin', 'admin']).get();
+        adminSnap.forEach(doc => {
+            if (!chaplains.find(c => c.uid === doc.id)) {
+                chaplains.push({ uid: doc.id, name: `${doc.data().displayName || doc.data().name || '未知'} (管理員)` });
+            }
+        });
+
+        return res.status(200).json({ success: true, chaplains });
+    } catch (error) {
+        console.error("取得關懷師名單失敗:", error);
+        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+    }
+}
+
+// 手動派案
+async function assignCaseManual(req, res) {
+    try {
+        const { caseId } = req.params;
+        const { adminUid, targetUid } = req.body;
+        
+        if (!adminUid || !targetUid) return res.status(400).json({ success: false, message: '參數不齊全' });
+
+        const adminUser = await verifyRole(adminUid);
+        if (adminUser.role !== 'admin' && adminUser.role !== 'super_admin') {
+            return res.status(403).json({ success: false, message: '無權限執行手動派案' });
+        }
+
+        const caseRef = db.collection('Cases').doc(caseId);
+        const doc = await caseRef.get();
+        if (!doc.exists) return res.status(404).json({ success: false, message: '找不到該案件' });
+
+        await caseRef.update({
+            assigned_to: targetUid,
+            claimed_by: null, // 手動派案視為重置接案狀態
+            status: 'pending', // 退回待辦狀態讓目標關懷師接案
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const { sendLinePush } = require('../services/dispatchService');
+        await sendLinePush(targetUid, `[派案通知] 管理員已將病患 ${doc.data().patient_name} 的案件指派給您，請前往面板查看。`);
+
+        return res.status(200).json({ success: true, message: '手動派案成功' });
+    } catch (error) {
+        console.error("手動派案失敗:", error);
+        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+    }
+}
+
+module.exports = { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual };

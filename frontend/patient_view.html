@@ -9,6 +9,13 @@
     <!-- 加入 FontAwesome 星星圖示 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="common/style.css">
+    <style>
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
     <!-- 加入 SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -51,7 +58,7 @@
 
         <div class="mt-2 pb-5">
             <button id="recordButton" class="btn btn-lg btn-danger rounded-pill px-5 py-4 shadow walkie-talkie-btn">
-                <span style="font-size: 1.5rem;">🎤 按住說話</span>
+                <span style="font-size: 1.5rem;">🎤 點擊螢幕任何一處按住說話</span>
             </button>
             <p class="text-muted mt-2 small">請允許麥克風權限後，長按按鈕即可錄音</p>
         </div>
