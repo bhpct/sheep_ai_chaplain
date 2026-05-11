@@ -365,16 +365,25 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelButtonText: '取消'
         }).then(async (result) => {
             if (result.isConfirmed) {
+                Swal.fire({
+                    title: '發送中...',
+                    text: '請稍候，系統正在呼叫 LINE API',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 try {
                     const res = await fetch(`/api/dashboard/cases/${caseId}/request-contact`, { method: 'POST' });
                     const data = await res.json();
                     if (data.success) {
                         Swal.fire('已發送！', '關懷小卡已送出', 'success');
                     } else {
-                        Swal.fire('錯誤', data.message || '發送失敗', 'error');
+                        Swal.fire('發送失敗', data.message || '無法發送', 'error');
                     }
                 } catch (e) {
-                    Swal.fire('錯誤', '網路連線異常', 'error');
+                    Swal.fire('錯誤', '網路連線異常，請檢查連線或重新整理頁面', 'error');
                 }
             }
         });
