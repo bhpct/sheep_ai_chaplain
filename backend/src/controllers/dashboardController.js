@@ -168,13 +168,23 @@ async function requestContact(req, res) {
         const liffId = process.env.LIFF_ID;
         let liffUrl = `https://liff.line.me/${liffId}/?page=contact&caseId=${caseId}`;
         
+        // 標記案件為「已索取電話」
+        await db.collection('Cases').doc(caseId).update({
+            contact_requested: true,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
         const { sendContactCardPush } = require('../services/dispatchService');
         
         try {
             await sendContactCardPush(patientUid, liffUrl);
             return res.status(200).json({ success: true, message: '已發送關懷小卡給病患！' });
         } catch (pushErr) {
-            return res.status(400).json({ success: false, message: pushErr.message });
+            console.warn(`推播發送失敗 (可能未加好友): ${pushErr.message}`);
+            return res.status(200).json({ 
+                success: true, 
+                message: '無法發送 LINE 推播 (病患可能未加好友)，但已啟動網頁攔截機制，病患下次說話時將自動於網頁彈出表單！' 
+            });
         }
 
     } catch (error) {

@@ -145,6 +145,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 typeText(result.data.ai_response, () => {
                     if (result.data.widget_action === 'mood_stars') {
                         interactiveWidget.style.display = 'block';
+                    } else if (result.data.widget_action === 'request_contact') {
+                        // 網頁攔截機制：自動彈出索取電話表單
+                        setTimeout(() => {
+                            Swal.fire({
+                                title: '關懷師關心您',
+                                text: '為了能提供您進一步的協助，請留下您的聯絡電話：',
+                                input: 'tel',
+                                inputPlaceholder: '例如：0912345678',
+                                showCancelButton: true,
+                                confirmButtonText: '送出',
+                                cancelButtonText: '稍後再說',
+                                inputValidator: (value) => {
+                                    if (!value) return '請輸入電話號碼！';
+                                    if (!/^[0-9\-]+$/.test(value)) return '格式不正確！';
+                                }
+                            }).then((res) => {
+                                if (res.isConfirmed && res.value) {
+                                    fetch(`/api/patient/cases/${result.data.case_id}/contact`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ phone: res.value })
+                                    })
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        if(d.success) Swal.fire('成功', '已將您的聯絡方式轉交給關懷師！', 'success');
+                                        else Swal.fire('錯誤', d.message, 'error');
+                                    });
+                                }
+                            });
+                        }, 1000);
                     }
                 });
             } else {

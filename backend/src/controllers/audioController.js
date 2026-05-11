@@ -243,11 +243,17 @@ async function handleAudioUpload(req, res) {
         }
         // ================================
 
+        // 網頁攔截機制：如果關懷師已按下索取聯絡方式，且目前尚未留下電話，則強制彈出聯絡表單
+        if (validActiveCase && validActiveCase.data().contact_requested && !validActiveCase.data().contact_phone) {
+            analysisResult.widget_action = 'request_contact';
+        }
+
         return res.status(200).json({
             success: true,
             message: '分析完成',
             data: {
                 log_id: docRef.id,
+                case_id: validActiveCase ? validActiveCase.id : null,
                 transcript: analysisResult.transcript,
                 ai_response: analysisResult.ai_response,
                 risk_level: analysisResult.risk_level,
