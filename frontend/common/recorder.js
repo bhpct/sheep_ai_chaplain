@@ -380,4 +380,17 @@ document.addEventListener('DOMContentLoaded', () => {
             initAudio();
         }
     }, 1500);
+
+    // 解決 iOS 背景存取麥克風 (紅/橘點) 的問題
+    // 當使用者滑掉網頁或網頁進入背景時，徹底釋放麥克風資源
+    const releaseMicrophone = () => {
+        if (mediaRecorder && mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            mediaRecorder = null;
+        }
+    };
+    window.addEventListener('pagehide', releaseMicrophone);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) releaseMicrophone();
+    });
 });
