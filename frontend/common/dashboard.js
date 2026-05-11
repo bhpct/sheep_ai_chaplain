@@ -115,6 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('tab-settings').classList.remove('d-none');
                     document.getElementById('tab-hospitals').classList.remove('d-none');
                     document.getElementById('tab-admin').classList.remove('d-none');
+                    
+                    // 最高管理員無法新增超級管理員
+                    const optSuperadmin = document.getElementById('opt-superadmin');
+                    if (userRole === 'admin' && optSuperadmin) {
+                        optSuperadmin.style.display = 'none';
+                    } else if (optSuperadmin) {
+                        optSuperadmin.style.display = 'block';
+                    }
                 } else if (userRole === 'chaplain') {
                     document.getElementById('tab-admin').classList.remove('d-none'); // 關懷師可能也需要看歷史紀錄？或者看需求
                 }
@@ -315,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.history.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = msg.role === 'user' ? 'msg-bubble msg-user shadow-sm' : 'msg-bubble msg-ai shadow-sm';
-                    div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 病患' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.content}`;
+                    div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 病患' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.text}`;
                     chatContainerEl.appendChild(div);
                 });
                 chatContainerEl.scrollTop = chatContainerEl.scrollHeight;
@@ -476,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><span class="badge bg-secondary"><i class="fa-solid fa-hospital"></i> ${u.hosp_id || '未綁定'}</span></td>
                 <td><code>${u.uid}</code></td>
                 <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
                     <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
                 </td>
             `;
@@ -529,6 +538,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.editUser = function(uid, name, role, hosp) {
+        document.getElementById('form-uid').value = uid;
+        document.getElementById('form-name').value = name;
+        document.getElementById('form-role').value = role;
+        document.getElementById('form-hosp').value = hosp;
+        
+        // 捲動到最上方
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     // ==========================================
     // 醫院頻道管理模組
     // ==========================================
@@ -579,13 +598,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const parentInfo = h.parent_id ? `<br><small class="text-secondary"><i class="fa-solid fa-sitemap"></i> 上層: ${h.parent_id}</small>` : '';
+            const threshold = h.open_threshold || 2;
 
             div.innerHTML = `
                 <div class="card shadow-sm border-0 h-100 rounded-4">
                     <div class="card-body">
                         <h6 class="fw-bold mb-2"><i class="fa-solid fa-hospital-user text-primary"></i> ${h.hosp_name}</h6>
-                        <small class="text-muted d-block mb-3">頻道 ID: <code>${h.id}</code>${parentInfo}</small>
+                        <small class="text-muted d-block mb-1">頻道 ID: <code>${h.id}</code>${parentInfo}</small>
+                        <small class="text-danger fw-bold d-block mb-3"><i class="fa-solid fa-bell"></i> 開案門檻: Level ${threshold}</small>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="editHospital('${h.id}', '${h.hosp_name}', '${h.parent_id || ''}', ${threshold})" title="修改頻道"><i class="fa-solid fa-pen"></i></button>
                             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="deleteHospital('${h.id}')" title="刪除頻道"><i class="fa-solid fa-trash"></i></button>
                             <button class="btn btn-outline-primary btn-sm w-100 rounded-pill" onclick="showQrCode('${h.id}', '${h.hosp_name}', '${patientUrl}')"><i class="fa-solid fa-qrcode"></i> 匯出病房 QR Code</button>
                         </div>
@@ -596,11 +618,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    window.editHospital = function(id, name, parentId, threshold) {
+        document.getElementById('hosp-id').value = id;
+        document.getElementById('hosp-name').value = name;
+        document.getElementById('hosp-parent').value = parentId;
+        document.getElementById('hosp-threshold').value = threshold || 2;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     document.getElementById('hosp-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('hosp-id').value;
         const name = document.getElementById('hosp-name').value;
         const parentId = document.getElementById('hosp-parent').value || null;
+        const openThreshold = parseInt(document.getElementById('hosp-threshold').value) || 2;
 
         if (!id || !name) {
             alert("請填寫完整資訊");
@@ -611,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/api/dashboard/hospitals`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminUid: chaplainUid, hospId: id, hospName: name, parentId })
+                body: JSON.stringify({ adminUid: chaplainUid, hospId: id, hospName: name, parentId, openThreshold })
             });
             const data = await res.json();
             if (data.success) {

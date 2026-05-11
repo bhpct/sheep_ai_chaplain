@@ -47,7 +47,7 @@ async function getHospitals(req, res) {
 // 新增/修改醫院頻道
 async function saveHospital(req, res) {
     try {
-        const { adminUid, hospId, hospName, parentId } = req.body;
+        const { adminUid, hospId, hospName, parentId, openThreshold } = req.body;
         const caller = await verifyRole(adminUid);
         
         // 只有超級管理員可以新增頻道
@@ -63,6 +63,7 @@ async function saveHospital(req, res) {
         await hospRef.set({
             hosp_name: hospName,
             parent_id: parentId || null,
+            open_threshold: openThreshold ? parseInt(openThreshold) : 2,
             created_at: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 

@@ -246,13 +246,22 @@
                             <label class="form-label small text-muted">對外顯示名稱</label>
                             <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例如：彰基 (總院)">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small text-muted">上層醫院 (可選)</label>
                             <select class="form-select rounded-pill" id="hosp-parent">
                                 <option value="">無 (獨立體系)</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">開案門檻</label>
+                            <select class="form-select rounded-pill" id="hosp-threshold">
+                                <option value="1">Level 1 (綠)</option>
+                                <option value="2" selected>Level 2 (藍)</option>
+                                <option value="3">Level 3 (黃)</option>
+                                <option value="4">Level 4 (紅)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
                             <button type="submit" class="btn btn-success rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 建立頻道</button>
                         </div>
                     </div>
