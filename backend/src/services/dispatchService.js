@@ -143,7 +143,7 @@ async function sendContactCardPush(to, liffUrl) {
             type: 'bubble',
             hero: {
                 type: 'image',
-                url: 'https://cdn.pixabay.com/photo/2020/03/10/16/47/sheep-4919539_1280.jpg', // 可以放咩咪羊的圖
+                url: 'https://sheep-ai-chaplain-453976607937.asia-east1.run.app/common/sheep_card.jpg',
                 size: 'full',
                 aspectRatio: '20:13',
                 aspectMode: 'cover'
