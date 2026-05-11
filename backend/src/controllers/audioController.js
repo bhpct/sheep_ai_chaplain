@@ -101,6 +101,42 @@ async function handleAudioUpload(req, res) {
              return res.status(400).json({ success: false, message: '沒有上傳音檔也沒有文字輸入' });
         }
 
+        // ===== 案件狀態管理與 24 小時逾期判斷 =====
+        const casesRef = db.collection('Cases');
+        const activeCaseSnapshot = await casesRef
+            .where('patient_uid', '==', lineUid)
+            .where('hosp_id', '==', hospId)
+            .where('status', 'in', ['pending', 'active', 'none'])
+            .get();
+
+        let validActiveCase = null;
+
+        if (!activeCaseSnapshot.empty) {
+            const caseDoc = activeCaseSnapshot.docs[0];
+            const currentData = caseDoc.data();
+            
+            // 檢查是否超過 24 小時未互動
+            const lastUpdated = currentData.updated_at ? currentData.updated_at.toDate() : new Date();
+            const now = new Date();
+            const diffHours = (now - lastUpdated) / (1000 * 60 * 60);
+
+            if (diffHours > 24) {
+                // 自動將舊案結案
+                await caseDoc.ref.update({
+                    status: 'closed',
+                    chaplain_notes: (currentData.chaplain_notes || '') + '\n[系統自動註記] 超過24小時無互動，自動結案。',
+                    updated_at: admin.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                validActiveCase = caseDoc;
+            }
+        }
+
+        // 如果找不到有效案件（或舊案已過期、或被刪除），強制清空前端傳來的歷史紀錄，當作全新對話
+        if (!validActiveCase) {
+            history = [];
+        }
+
         const analysisResult = await analyzeInteraction(audioBuffer, mimeType, textInput, history);
 
         const expireAt = new Date();
@@ -133,14 +169,7 @@ async function handleAudioUpload(req, res) {
         // ===== 派案系統邏輯 (Phase 5 & 6) =====
         const isOpened = analysisResult.risk_level >= openThreshold;
 
-        const casesRef = db.collection('Cases');
-        const activeCaseSnapshot = await casesRef
-            .where('patient_uid', '==', lineUid)
-            .where('hosp_id', '==', hospId)
-            .where('status', 'in', ['pending', 'active', 'none'])
-            .get();
-
-        if (activeCaseSnapshot.empty) {
+        if (!validActiveCase) {
             // 新案件
             let assignedChaplainUid = null;
             let initialStatus = 'none';
@@ -179,7 +208,7 @@ async function handleAudioUpload(req, res) {
             }
         } else {
             // 既有案件：更新風險與最新對話
-            const caseDoc = activeCaseSnapshot.docs[0];
+            const caseDoc = validActiveCase;
             const currentData = caseDoc.data();
             
             let newStatus = currentData.status;

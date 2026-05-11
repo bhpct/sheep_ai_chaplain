@@ -136,12 +136,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('chaplain-info').innerHTML = `${roleIcon} ${roleName} | 頻道: ${currentHospId}`;
 
                 allCases = data.cases;
+                updateBadgeCounts();
                 renderCases();
             }
         } catch (e) {
             console.error(e);
             casesListEl.innerHTML = '<div class="p-4 text-danger text-center">網路連線異常，無法取得案件資料。</div>';
         }
+    }
+
+    function updateBadgeCounts() {
+        const pendingCount = allCases.filter(c => c.status === 'pending').length;
+        const activeCount = allCases.filter(c => c.status === 'active').length;
+        
+        const badgePending = document.getElementById('badge-pending');
+        if (badgePending) badgePending.innerText = pendingCount;
+        
+        const badgeActive = document.getElementById('badge-active');
+        if (badgeActive) badgeActive.innerText = activeCount;
     }
 
     function renderCases() {
@@ -179,7 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="m-0 fw-bold ${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-dark'}"><i class="fa-brands fa-line text-success fs-6"></i> ${c.patient_name || '未知病患'}</h5>
+                    <h5 class="m-0 fw-bold ${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-dark'}">
+                        <i class="fa-brands fa-line text-success fs-6"></i> ${c.patient_name || '未知病患'}
+                        <button class="btn btn-sm rounded-pill ms-2 ${c.current_risk_level === 4 && c.status === 'pending' ? 'btn-outline-light' : 'btn-outline-secondary'} py-0 px-2" style="font-size: 0.75rem;" title="複製 UID" onclick="copyToClipboard('${c.patient_uid}', event)">
+                            <i class="fa-regular fa-copy"></i> UID
+                        </button>
+                    </h5>
                     <div>
                         <small class="${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-muted'} fw-bold me-2">${timeStr}</small>
                         ${deleteBtnHtml}
@@ -415,6 +432,22 @@ document.addEventListener('DOMContentLoaded', () => {
             `,
             icon: 'info',
             confirmButtonText: '關閉'
+        });
+    };
+
+    window.copyToClipboard = function(text, event) {
+        if (event) event.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({
+                title: '已複製',
+                text: 'UID: ' + text,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }).catch(err => {
+            console.error('複製失敗', err);
+            Swal.fire('錯誤', '複製失敗，請手動選取', 'error');
         });
     };
 
