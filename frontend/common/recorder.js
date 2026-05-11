@@ -279,8 +279,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRecording) return;
         
         if (!mediaRecorder) {
+            chatBubble.innerHTML = '<span class="typing-cursor">正在啟用麥克風...</span>';
             await initAudio(); 
             if (!mediaRecorder) return; 
+            
+            // 第一次授權完成，不繼續這次的錄音（因為手指在點擊授權時可能已經放開了，會導致事件錯亂）
+            chatBubble.innerHTML = "麥克風已就緒，請再次按住按鈕開始說話！";
+            Swal.fire({
+                title: '授權成功',
+                text: '麥克風已就緒，請「再次按住畫面」開始對話！',
+                icon: 'success',
+                timer: 2500,
+                showConfirmButton: false
+            });
+            return; 
         }
 
         try {
@@ -354,17 +366,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 防止右鍵選單與長按選取干擾
     document.body.addEventListener('contextmenu', e => e.preventDefault());
     
-    // 將啟動函數掛載到全域供 HTML 呼叫
-    window.startMiemieSheep = async function() {
-        const btn = document.getElementById('btnEnter');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 連線中...';
-        btn.disabled = true;
-        try {
-            await initAudio();
-            document.getElementById('startOverlay').style.display = 'none';
-        } catch (e) {
-            btn.innerHTML = '<i class="fa-solid fa-microphone me-2"></i> 授權失敗，請重試';
-            btn.disabled = false;
+    // 完全鎖定畫面滑動，防止上下抖動
+    document.body.addEventListener('touchmove', (e) => {
+        // 除非是在可以滾動的 SweetAlert 內，否則一律阻擋
+        if (!e.target.closest('.swal2-container')) {
+            e.preventDefault();
         }
-    };
+    }, { passive: false });
+
+    // 初始化時就嘗試取得一次麥克風權限 (一勞永逸)
+    setTimeout(() => {
+        if (!mediaRecorder) {
+            initAudio();
+        }
+    }, 1500);
 });
