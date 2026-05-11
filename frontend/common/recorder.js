@@ -354,10 +354,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 防止右鍵選單與長按選取干擾
     document.body.addEventListener('contextmenu', e => e.preventDefault());
     
-    // 初始化時就嘗試取得一次麥克風權限 (一勞永逸)
-    setTimeout(() => {
-        if (!mediaRecorder) {
-            initAudio();
+    // 將啟動函數掛載到全域供 HTML 呼叫
+    window.startMiemieSheep = async function() {
+        const btn = document.getElementById('btnEnter');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 連線中...';
+        btn.disabled = true;
+        try {
+            await initAudio();
+            document.getElementById('startOverlay').style.display = 'none';
+        } catch (e) {
+            btn.innerHTML = '<i class="fa-solid fa-microphone me-2"></i> 授權失敗，請重試';
+            btn.disabled = false;
         }
-    }, 1500);
+    };
 });

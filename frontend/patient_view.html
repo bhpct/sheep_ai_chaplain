@@ -57,6 +57,16 @@
     </script>
 </head>
 <body>
+    <!-- 麥克風授權與啟動遮罩 -->
+    <div id="startOverlay" class="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column align-items-center justify-content-center" style="z-index: 1050;">
+        <img src="common/miemie_sheep.png" width="150" class="mb-4">
+        <h3 class="fw-bold mb-3">歡迎來到咩咪羊頻道</h3>
+        <p class="text-muted mb-4 px-4 text-center">為了讓咩咪羊能聽到您的聲音，<br>請點擊下方按鈕並「允許」使用麥克風。</p>
+        <button id="btnEnter" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow" onclick="startMiemieSheep()">
+            <i class="fa-solid fa-microphone me-2"></i> 開始對話
+        </button>
+    </div>
+
     <div class="container mt-5 text-center" style="max-width: 600px;">
         <h2 class="mb-3">🐑 咩咪羊 聽你說心事</h2>
         <div class="badge bg-secondary mb-4 p-2" id="hosp-welcome">載入中...</div>
@@ -97,6 +107,6 @@
     <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <!-- 載入錄音邏輯 -->
-    <script src="common/recorder.js?v=5"></script>
+    <script src="common/recorder.js?v=6"></script>
 </body>
 </html>
