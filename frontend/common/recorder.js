@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRecording = false;
     let recordStartTime = 0;
     let ignoreCurrentRecording = false;
+    let lastTouchEndTime = 0; // 用來阻擋 touch 結束後瀏覽器自動觸發的假 mousedown 事件
     
     // 全域對話記憶體與 UID
     let conversationHistory = [];
@@ -270,6 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 排除點擊到星星按鈕或其他 UI 元件的情況
         if (e.target.closest('.star-btn') || e.target.closest('.swal2-container')) return;
         
+        // 防呆機制：如果是手機觸控放開後，瀏覽器自動補發的假 mousedown，在 500ms 內全部忽略
+        if (e.type === 'mousedown' && (Date.now() - lastTouchEndTime < 500)) return;
+
         if (e.type !== 'touchstart' && e.button !== 0) return; 
         
         if (isRecording) return;
@@ -298,6 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const stopRecording = (e) => {
+        if (e.type === 'touchend' || e.type === 'touchcancel') {
+            lastTouchEndTime = Date.now();
+        }
+
         if (!isRecording || !mediaRecorder) return;
 
         try {
