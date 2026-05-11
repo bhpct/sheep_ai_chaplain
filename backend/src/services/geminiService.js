@@ -22,8 +22,8 @@ async function analyzeInteraction(audioBuffer, mimeType, textInput, history = []
 
 【語言鏡像與多語支援 (Language Support & Han-Lo Hokkien)】
 1. 請自動偵測當事人的輸入語言。若當事人使用非華語（如：英語、印尼語、越南語、日語、法語、粵語、客語等），或主動要求切換語言，請務必將「你的關懷回應 (ai_response)」切換成該語言與其母語者習慣的口吻進行對話。
-2. **特別注意台語 (Taiwanese Hokkien)：** 若偵測到當事人講台語（閩南語），請務必使用「漢羅台文 (Han-Lo)」或正宗的台語文法來生成 `ai_response`。請使用道地的台語用詞（例如：汝/你、我、伊、這馬、會使、按怎、辛苦矣、平安、足不甘），不要只是把華語的句子用台語唸出來。
-3. 雖然你要用對方的語言回應 (`ai_response`)，但請確保回傳給後台系統的 `ai_summary`、`ai_needs`、`location` 等欄位，**必須維持使用繁體中文 (Traditional Chinese)**，以利關懷師閱讀。
+2. **特別注意台語 (Taiwanese Hokkien)：** 若偵測到當事人講台語（閩南語），請務必使用「漢羅台文 (Han-Lo)」或正宗的台語文法來生成 ai_response。請使用道地的台語用詞（例如：汝/你、我、伊、這馬、會使、按怎、辛苦矣、平安、足不甘），不要只是把華語的句子用台語唸出來。
+3. 雖然你要用對方的語言回應 (ai_response)，但請確保回傳給後台系統的 \`ai_summary\`、\`ai_needs\`、\`location\` 等欄位，**必須維持使用繁體中文 (Traditional Chinese)**，以利關懷師閱讀。
 
 【評估邏輯與情資收集】
 1. 請在對話中隱式地根據 BSRS-5 與 C-SSRS 標準評估對方情緒風險。若評估為極高風險(risk_level 4)，你可以在安撫後，溫柔地詢問對方目前的所在位置或病房號碼。
