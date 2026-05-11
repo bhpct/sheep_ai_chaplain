@@ -160,8 +160,8 @@ async function requestContact(req, res) {
         const caseData = doc.data();
         const patientUid = caseData.patient_uid; // 開案時的 lineUid
         
-        if (!patientUid) {
-            return res.status(400).json({ success: false, message: '此案件沒有綁定病患 LINE UID' });
+        if (!patientUid || patientUid === 'anonymous_uid') {
+            return res.status(400).json({ success: false, message: '此案件為電腦網頁匿名對話，無 LINE 帳號可發送推播！(病患必須用 LINE 開啟連結)' });
         }
 
         // 組裝 LIFF URL 或直接網頁 URL
@@ -169,9 +169,14 @@ async function requestContact(req, res) {
         let liffUrl = `https://liff.line.me/${liffId}/?page=contact&caseId=${caseId}`;
         
         const { sendContactCardPush } = require('../services/dispatchService');
-        await sendContactCardPush(patientUid, liffUrl);
+        
+        try {
+            await sendContactCardPush(patientUid, liffUrl);
+            return res.status(200).json({ success: true, message: '已發送關懷小卡給病患！' });
+        } catch (pushErr) {
+            return res.status(400).json({ success: false, message: pushErr.message });
+        }
 
-        return res.status(200).json({ success: true, message: '已發送關懷小卡給病患！' });
     } catch (error) {
         console.error("發送聯絡卡片失敗:", error);
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
