@@ -257,7 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
             recordStartTime = Date.now();
             
             recordButton.classList.add('recording');
-            recordButton.innerHTML = '<span style="font-size: 1.5rem;">⏳ 錄音中... 放開傳送</span>';
+            recordButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            document.getElementById('recordStatusText').innerHTML = '<span class="text-danger">⏳ 錄音中... 放開傳送</span>';
             chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊專心聽您說...</span>';
             interactiveWidget.style.display = 'none';
             playBeep();
@@ -280,7 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder.stop();
             isRecording = false;
             recordButton.classList.remove('recording');
-            recordButton.innerHTML = '<span style="font-size: 1.5rem;">🎤 點擊螢幕任何一處按住說話</span>';
+            recordButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            document.getElementById('recordStatusText').innerText = '按住螢幕說話';
             sheepAvatar.classList.remove('nodding'); 
         } catch (err) {
             console.error("停止錄音失敗:", err);
@@ -308,6 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mouseup', stopRecording); 
     document.body.addEventListener('touchstart', startRecording, { passive: false });
     window.addEventListener('touchend', stopRecording);
+    window.addEventListener('touchcancel', stopRecording);
+    window.addEventListener('mouseleave', stopRecording);
 
     // 防止右鍵選單與長按選取干擾
     document.body.addEventListener('contextmenu', e => e.preventDefault());

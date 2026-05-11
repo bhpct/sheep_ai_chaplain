@@ -14,6 +14,35 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: none; /* 防止滑動或縮放 */
+            overscroll-behavior-y: none; /* 防止下拉更新 */
+        }
+        
+        .mic-button-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        #recordButton {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        #recordButton i {
+            font-size: 3rem;
+        }
+
+        #recordButton:active {
+            transform: scale(0.9);
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
         }
     </style>
     <!-- 加入 SweetAlert2 -->
@@ -56,17 +85,18 @@
             </div>
         </div>
 
-        <div class="mt-2 pb-5">
-            <button id="recordButton" class="btn btn-lg btn-danger rounded-pill px-5 py-4 shadow walkie-talkie-btn">
-                <span style="font-size: 1.5rem;">🎤 點擊螢幕任何一處按住說話</span>
+        <div class="mic-button-wrapper pb-5">
+            <button id="recordButton" class="btn btn-danger shadow walkie-talkie-btn">
+                <i class="fa-solid fa-microphone"></i>
             </button>
-            <p class="text-muted mt-2 small">請允許麥克風權限後，長按按鈕即可錄音</p>
+            <h5 id="recordStatusText" class="text-muted mt-4 fw-bold">按住螢幕說話</h5>
+            <p class="text-muted mt-1 small">請允許麥克風權限後，長按按鈕即可錄音</p>
         </div>
     </div>
 
     <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <!-- 載入錄音邏輯 -->
-    <script src="common/recorder.js?v=2"></script>
+    <script src="common/recorder.js?v=3"></script>
 </body>
 </html>

@@ -233,8 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openCaseDetail(caseData) {
         currentSelectedCase = caseData;
         
-        document.getElementById('detail-name').innerText = caseData.patient_name || '未知';
-        document.getElementById('detail-location').innerText = caseData.location || '未提供';
+        document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知病患'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
+        document.getElementById('detail-location').innerText = caseData.location || '未知';
         document.getElementById('detail-risk-badge').innerHTML = `
             <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
             <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-sm" onclick="showTriageDetail('${caseData.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
@@ -471,6 +471,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 switchTab('closed');
             } else {
                 Swal.fire('錯誤', data.message || '結案失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.assignCaseManual = async function(caseId) {
+        const targetUid = document.getElementById('manual-assign-select').value;
+        if (!targetUid) {
+            Swal.fire('提示', '請先選擇要指派的關懷師', 'warning');
+            return;
+        }
+
+        if (!confirm('確定要將此案件強制指派給該關懷師嗎？')) return;
+
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, targetUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('成功', '案件已重新指派', 'success');
+                detailModal.hide();
+                loadCases();
+            } else {
+                Swal.fire('錯誤', data.message || '指派失敗', 'error');
             }
         } catch (e) {
             Swal.fire('錯誤', '網路錯誤', 'error');
