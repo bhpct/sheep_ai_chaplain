@@ -187,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="d-flex align-items-center flex-wrap">
                     <span class="badge bg-${getRiskColor(c.current_risk_level)} me-2 mb-2 px-3 py-2 rounded-pill shadow-sm">Level ${c.current_risk_level}</span>
+                    <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 me-3 mb-2 shadow-sm" onclick="showTriageDetail('${c.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
                     <span class="badge bg-secondary me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-hospital"></i> ${c.hosp_id}</span>
                     <small class="${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-secondary'} fw-bold mb-2"><i class="fa-solid fa-location-dot text-danger"></i> ${c.location || '位置未知'}</small>
                 </div>
@@ -217,7 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('detail-name').innerText = caseData.patient_name || '未知';
         document.getElementById('detail-location').innerText = caseData.location || '未提供';
-        document.getElementById('detail-risk-badge').innerHTML = `<span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm">Level ${caseData.current_risk_level}</span>`;
+        document.getElementById('detail-risk-badge').innerHTML = `
+            <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
+            <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-sm" onclick="showTriageDetail('${caseData.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
+        `;
         document.getElementById('detail-time').innerText = new Date(caseData.created_at).toLocaleString();
         
         const phoneEl = document.getElementById('detail-phone');
@@ -388,6 +392,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    window.showTriageDetail = function(caseId) {
+        if (event) event.stopPropagation();
+        const caseData = allCases.find(c => c.id === caseId);
+        if (!caseData || !caseData.latest_ai_triage_score || Object.keys(caseData.latest_ai_triage_score).length === 0) {
+            Swal.fire('提示', '目前尚無詳細判定資料', 'info');
+            return;
+        }
+        
+        const score = caseData.latest_ai_triage_score.bsrs_estimate || '未知';
+        const reasoning = caseData.latest_ai_triage_score.reasoning || '無紀錄';
+        
+        Swal.fire({
+            title: '詳細判定指標',
+            html: `
+                <div class="text-start mt-3 p-3 bg-light rounded-3 border">
+                    <p class="mb-2"><strong><i class="fa-solid fa-chart-pie text-primary"></i> 預估分數：</strong> <span class="badge bg-dark">${score}</span></p>
+                    <p class="mb-0"><strong><i class="fa-solid fa-clipboard-check text-success"></i> 判定理由：</strong></p>
+                    <p class="text-muted mt-1 mb-0">${reasoning}</p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: '關閉'
+        });
+    };
 
     window.closeCase = async function(caseId) {
         const notes = document.getElementById('chaplain-notes').value;

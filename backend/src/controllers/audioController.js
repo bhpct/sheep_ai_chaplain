@@ -168,7 +168,8 @@ async function handleAudioUpload(req, res) {
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 last_escalated_at: null,
                 latest_transcript: logData.transcript,
-                latest_ai_response: logData.ai_response
+                latest_ai_response: logData.ai_response,
+                latest_ai_triage_score: analysisResult.ai_triage_score || {}
             };
             await casesRef.add(newCaseData);
             
@@ -202,7 +203,8 @@ async function handleAudioUpload(req, res) {
                 location: analysisResult.location || currentData.location,
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 latest_transcript: logData.transcript,
-                latest_ai_response: logData.ai_response
+                latest_ai_response: logData.ai_response,
+                latest_ai_triage_score: analysisResult.ai_triage_score || currentData.latest_ai_triage_score || {}
             });
 
             // 如果是這次才觸發開案，補送推播
