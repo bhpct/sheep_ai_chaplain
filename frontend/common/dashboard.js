@@ -550,12 +550,12 @@ document.addEventListener('DOMContentLoaded', () => {
             else roleBadge = '<span class="badge bg-success">關懷師</span>';
 
             tr.innerHTML = `
-                <td class="fw-bold"><i class="fa-solid fa-user-circle text-muted me-2"></i>${u.name || '未知名稱'}</td>
+                <td class="fw-bold"><i class="fa-solid fa-user-circle text-muted me-2"></i>${u.displayName || u.name || '未知名稱'}</td>
                 <td>${roleBadge}</td>
                 <td><span class="badge bg-secondary"><i class="fa-solid fa-hospital"></i> ${u.hosp_id || '未綁定'}</span></td>
                 <td><code>${u.uid}</code></td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.displayName || u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
                     <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
                 </td>
             `;
