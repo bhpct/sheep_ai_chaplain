@@ -751,9 +751,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 顯示 QR Code
     window.showQrCode = function(hospId, hospName, url) {
         document.getElementById('qr-modal-title').innerText = `${hospName} 專屬連結`;
-        document.getElementById('qr-url-input').value = url;
+        document.getElementById('qr-url').value = url;
         
-        const canvas = document.getElementById('qr-code-canvas');
+        const canvas = document.getElementById('qrcode-canvas');
         const qr = new QRious({
             element: canvas,
             value: url,
@@ -767,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 複製連結
     window.copyQrUrl = function() {
-        const copyText = document.getElementById("qr-url-input");
+        const copyText = document.getElementById("qr-url");
         copyText.select();
         copyText.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(copyText.value);
