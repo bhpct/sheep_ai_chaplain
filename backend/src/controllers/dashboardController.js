@@ -46,11 +46,20 @@ async function getCases(req, res) {
 
         const allowedHospIds = [userHospId, ...getDescendants(userHospId)];
 
+        // 取得所有使用者名稱對照表
+        const usersSnapshot = await db.collection('Users').get();
+        const userNames = {};
+        usersSnapshot.forEach(uDoc => {
+            userNames[uDoc.id] = uDoc.data().name || '未知人員';
+        });
+
         snapshot.forEach(doc => {
             const data = doc.data();
             const caseData = {
                 id: doc.id,
                 ...data,
+                assigned_to_name: data.assigned_to ? (userNames[data.assigned_to] || '未知') : null,
+                claimed_by_name: data.claimed_by ? (userNames[data.claimed_by] || '未知') : null,
                 created_at: data.created_at ? data.created_at.toDate() : new Date(),
                 updated_at: data.updated_at ? data.updated_at.toDate() : new Date()
             };

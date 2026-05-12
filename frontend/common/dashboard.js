@@ -205,7 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="d-flex align-items-center flex-wrap">
                     <span class="badge bg-${getRiskColor(c.current_risk_level)} me-2 mb-2 px-3 py-2 rounded-pill shadow-sm">Level ${c.current_risk_level}</span>
                     <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 me-3 mb-2 shadow-sm" onclick="showTriageDetail('${c.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
-                    <span class="badge bg-secondary me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-hospital"></i> ${c.hosp_id}</span>
+                    <span class="badge bg-secondary me-2 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-hospital"></i> ${c.hosp_id}</span>
+                    ${c.status === 'pending' && c.assigned_to_name ? `<span class="badge bg-warning text-dark me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-user-clock"></i> 已指派給: ${c.assigned_to_name}</span>` : ''}
+                    ${c.status === 'active' && c.claimed_by_name ? `<span class="badge bg-success me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-user-check"></i> 承接人: ${c.claimed_by_name}</span>` : ''}
+                    ${c.status === 'closed' && c.claimed_by_name ? `<span class="badge bg-dark me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-user-check"></i> 結案人: ${c.claimed_by_name}</span>` : ''}
                     <small class="${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-secondary'} fw-bold mb-2"><i class="fa-solid fa-location-dot text-danger"></i> ${c.location || '位置未知'}</small>
                 </div>
             `;
