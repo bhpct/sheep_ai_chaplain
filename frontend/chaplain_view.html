@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>?�咪�??�懷師面??/title>
+    <title>咩咪羊 關懷師面板</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
@@ -13,7 +13,7 @@
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary-bg: #f8f9fa; /* 乾淨?��??�淺?�白??*/
+            --primary-bg: #f8f9fa; /* 乾淨柔和的淺灰白色 */
             --glass-bg: rgba(255, 255, 255, 0.7);
             --glass-border: rgba(255, 255, 255, 0.4);
             --text-main: #2d3748;
@@ -101,7 +101,7 @@
         .msg-user { background: #c6f6d5; margin-left: auto; border-bottom-right-radius: 4px; color: #22543d; }
         .msg-ai { background: #edf2f7; border-bottom-left-radius: 4px; color: #2d3748; }
         
-        /* ?�印?�樣�?*/
+        /* 列印用樣式 */
         @media print {
             .navbar, #main-tabs, .btn, .modal-footer, #list-header { display: none !important; }
             body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -130,55 +130,56 @@
   <div class="container">
     <a class="navbar-brand" href="#">
         <img src="common/miemie_sheep.png" alt="Logo" class="rounded-circle shadow-sm">
-        ?�咪�??�懷師面??    </a>
+        咩咪羊 關懷師面板
+    </a>
     <div class="d-flex align-items-center">
         <span class="badge bg-light text-dark shadow-sm px-3 py-2 rounded-pill border" id="chaplain-info">
-            <i class="fa-solid fa-spinner fa-spin"></i> 載入�?..
+            <i class="fa-solid fa-spinner fa-spin"></i> 載入中...
         </span>
     </div>
   </div>
 </nav>
 
 <div class="container mt-4">
-    <!-- RWD ?�籤 -->
+    <!-- RWD 頁籤 -->
     <div class="d-flex justify-content-center mb-4">
         <ul class="nav nav-pills" id="main-tabs">
             <li class="nav-item">
                 <a class="nav-link active" href="#" onclick="switchTab('pending')"><i class="fa-solid fa-bell"></i> 待辦案件 <span class="badge bg-danger rounded-pill ms-1 shadow-sm" id="badge-pending">0</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" onclick="switchTab('active')"><i class="fa-solid fa-user-doctor"></i> ?��?�?<span class="badge bg-success rounded-pill ms-1 shadow-sm" id="badge-active">0</span></a>
+                <a class="nav-link" href="#" onclick="switchTab('active')"><i class="fa-solid fa-user-doctor"></i> 處理中 <span class="badge bg-success rounded-pill ms-1 shadow-sm" id="badge-active">0</span></a>
             </li>
             <li class="nav-item d-none" id="tab-admin">
-                <a class="nav-link" href="#" onclick="switchTab('closed')"><i class="fa-solid fa-folder-open"></i> 歷史/?��?�?/a>
+                <a class="nav-link" href="#" onclick="switchTab('closed')"><i class="fa-solid fa-folder-open"></i> 歷史/未開案</a>
             </li>
             <li class="nav-item d-none" id="tab-settings">
-                <a class="nav-link" href="#" onclick="switchTab('settings')"><i class="fa-solid fa-users-gear"></i> 人員管�?</a>
+                <a class="nav-link" href="#" onclick="switchTab('settings')"><i class="fa-solid fa-users-gear"></i> 人員管理</a>
             </li>
             <li class="nav-item d-none" id="tab-hospitals">
-                <a class="nav-link" href="#" onclick="switchTab('hospitals')"><i class="fa-solid fa-hospital"></i> ?�院?��?</a>
+                <a class="nav-link" href="#" onclick="switchTab('hospitals')"><i class="fa-solid fa-hospital"></i> 醫院頻道</a>
             </li>
         </ul>
     </div>
 
-    <!-- ?�表標�??�說??-->
+    <!-- 列表標題與說明 -->
     <div class="d-flex justify-content-between align-items-center mb-3" id="list-header">
         <h5 class="m-0 text-dark fw-bold" id="tab-title">待辦案件</h5>
-        <button class="btn btn-light rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#helpModal" title="?��?等�?說�?">
+        <button class="btn btn-light rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#helpModal" title="開案等級說明">
             <i class="fa-solid fa-question text-info"></i>
         </button>
     </div>
 
-    <!-- 案件?�表?� -->
+    <!-- 案件列表區 -->
     <div id="cases-list">
         <div class="text-center text-muted py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>
     </div>
 
-    <!-- 人員設�??�面?� (?�設?��?) -->
+    <!-- 人員設定頁面區 (預設隱藏) -->
     <div id="settings-panel" style="display: none;">
         <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
-                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-user-plus text-primary"></i> ?��?/修改人員權�?</h5>
+                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-user-plus text-primary"></i> 新增/修改人員權限</h5>
                 <form id="user-form" onsubmit="saveUser(event)">
                     <div class="row g-3">
                         <div class="col-md-3">
@@ -186,149 +187,149 @@
                             <input type="text" class="form-control rounded-pill" id="form-uid" required placeholder="U1234567890...">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">顯示?�稱</label>
-                            <input type="text" class="form-control rounded-pill" id="form-name" required placeholder="例�?：�?小�? ?�懷�?>
+                            <label class="form-label small text-muted">顯示名稱</label>
+                            <input type="text" class="form-control rounded-pill" id="form-name" required placeholder="例如：王小明 關懷師">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">?�屬�???/label>
+                            <label class="form-label small text-muted">所屬分院</label>
                             <select class="form-select rounded-pill" id="form-hosp" required>
-                                <option value="">載入�?..</option>
+                                <option value="">載入中...</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small text-muted">角色權�?</label>
+                            <label class="form-label small text-muted">角色權限</label>
                             <select class="form-select rounded-pill" id="form-role" required>
-                                <option value="chaplain">?�懷�?/option>
-                                <option value="admin">?�高管?�員</option>
-                                <option value="super_admin" id="opt-superadmin">超�?管�???/option>
+                                <option value="chaplain">關懷師</option>
+                                <option value="admin">最高管理員</option>
+                                <option value="super_admin" id="opt-superadmin">超級管理員</option>
                             </select>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> ?��?</button>
+                            <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 儲存</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary"></i> ?��?人員?�單</h5>
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary"></i> 目前人員名單</h5>
         <div class="table-responsive table-glass shadow-sm">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th class="border-0">?�稱</th>
+                        <th class="border-0">名稱</th>
                         <th class="border-0">角色</th>
-                        <th class="border-0">?�屬�???/th>
+                        <th class="border-0">所屬分院</th>
                         <th class="border-0">LINE UID</th>
-                        <th class="border-0 text-end">?��?</th>
+                        <th class="border-0 text-end">操作</th>
                     </tr>
                 </thead>
                 <tbody id="users-table-body">
-                    <tr><td colspan="6" class="text-center py-4 text-muted">載入�?..</td></tr>
+                    <tr><td colspan="6" class="text-center py-4 text-muted">載入中...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- ?�院?��??�面?� (?�設?��?) -->
+    <!-- 醫院頻道頁面區 (預設隱藏) -->
     <div id="hospitals-panel" style="display: none;">
         <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
-                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-square-plus text-primary"></i> ?��??�院?��?</h5>
+                <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-square-plus text-primary"></i> 新增醫院頻道</h5>
                 <form id="hosp-form" onsubmit="saveHospital(event)">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">?��?�?�� (Hospital ID)</label>
-                            <input type="text" class="form-control rounded-pill" id="hosp-id" required placeholder="例�?：CCH-MAIN">
+                            <label class="form-label small text-muted">頻道代碼 (Hospital ID)</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-id" required placeholder="例如：CCH-MAIN">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">對�?顯示?�稱</label>
-                            <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例�?：彰??(總院)">
+                            <label class="form-label small text-muted">對外顯示名稱</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例如：彰基 (總院)">
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small text-muted">上層?�院 (?�選)</label>
+                            <label class="form-label small text-muted">上層醫院 (可選)</label>
                             <select class="form-select rounded-pill" id="hosp-parent">
-                                <option value="">??(?��?體系)</option>
+                                <option value="">無 (獨立體系)</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small text-muted">?��??��?/label>
+                            <label class="form-label small text-muted">開案門檻</label>
                             <select class="form-select rounded-pill" id="hosp-threshold">
-                                <option value="1">Level 1 (�?</option>
-                                <option value="2" selected>Level 2 (??</option>
-                                <option value="3">Level 3 (�?</option>
-                                <option value="4">Level 4 (�?</option>
+                                <option value="1">Level 1 (綠)</option>
+                                <option value="2" selected>Level 2 (藍)</option>
+                                <option value="3">Level 3 (黃)</option>
+                                <option value="4">Level 4 (紅)</option>
                             </select>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-success rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 建�??��?</button>
+                            <button type="submit" class="btn btn-success rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 建立頻道</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <h5 class="fw-bold mb-3"><i class="fa-solid fa-building text-primary"></i> ?��?管�???QR Code</h5>
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-building text-primary"></i> 頻道管理與 QR Code</h5>
         <div class="row" id="hospitals-list">
-            <div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入�?..</div>
+            <div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>
         </div>
     </div>
 </div>
 
-<!-- 說�? Modal -->
+<!-- 說明 Modal -->
 <div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info text-info"></i> 緊急�?�?(Risk Level) 說�?</h5>
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info text-info"></i> 緊急等級 (Risk Level) 說明</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <p class="text-muted mb-4">系統??AI ?��?語音?�容?��??��? BSRS-5 ??C-SSRS ?��?檢傷評估�?/p>
+        <p class="text-muted mb-4">系統由 AI 透過語音內容自動進行 BSRS-5 與 C-SSRS 隱式檢傷評估：</p>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fff5f5; border-left: 4px solid #fc8181;">
-            <div><span class="badge bg-danger fs-6 mb-1">Level 4 (�?</span><br><small class="text-dark">極�?風險?�透露輕�?念頭?�嚴?�暴?�傾?��?系統?��??�發?�全?�警?��?/small></div>
+            <div><span class="badge bg-danger fs-6 mb-1">Level 4 (紅)</span><br><small class="text-dark">極高風險。透露輕生念頭或嚴重暴力傾向，系統會立刻發送全域警報。</small></div>
         </div>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fffff0; border-left: 4px solid #f6e05e;">
-            <div><span class="badge bg-warning text-dark fs-6 mb-1">Level 3 (�?</span><br><small class="text-dark">高風?�。嚴?��?鬱�?絕�?，強?��?要�??��?/small></div>
+            <div><span class="badge bg-warning text-dark fs-6 mb-1">Level 3 (黃)</span><br><small class="text-dark">高風險。嚴重憂鬱或絕望，強烈需要介入。</small></div>
         </div>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #ebf8ff; border-left: 4px solid #63b3ed;">
-            <div><span class="badge bg-primary fs-6 mb-1">Level 2 (??</span><br><small class="text-dark">中風?�。�??�顯?��??�擾?�睡?��?礙�??��?案�?準�?/small></div>
+            <div><span class="badge bg-primary fs-6 mb-1">Level 2 (藍)</span><br><small class="text-dark">中風險。有明顯情緒困擾或睡眠障礙，達開案標準。</small></div>
         </div>
         <div class="d-flex align-items-center p-3 rounded-3" style="background: #f0fff4; border-left: 4px solid #68d391;">
-            <div><span class="badge bg-success fs-6 mb-1">Level 1 (�?</span><br><small class="text-dark">低風?�。�?緒平穩�?系統?��??��?，�??�未?��?紀?��???/small></div>
+            <div><span class="badge bg-success fs-6 mb-1">Level 1 (綠)</span><br><small class="text-dark">低風險。情緒平穩，系統暫不開案，列入未開案紀錄區。</small></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 案件詳�? Modal (RWD ?�螢�?彈�?) -->
+<!-- 案件詳情 Modal (RWD 全螢幕/彈窗) -->
 <div class="modal fade" id="caseDetailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-md-down">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title fw-bold" id="detail-title">案件詳�?</h5>
+        <h5 class="modal-title fw-bold" id="detail-title">案件詳情</h5>
         <div>
-            <button class="btn btn-light rounded-circle shadow-sm me-2" onclick="window.print()" title="?�印?�歷"><i class="fa-solid fa-print"></i></button>
+            <button class="btn btn-light rounded-circle shadow-sm me-2" onclick="window.print()" title="列印病歷"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
       </div>
       <div class="modal-body p-4 bg-light">
         
-        <!-- ?�本資�??��? -->
+        <!-- 基本資訊卡片 -->
         <div class="card mb-4 border-0 shadow-sm rounded-4">
             <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> ?�患?�稱</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 病患名稱</small>
                         <strong class="fs-5" id="detail-name">-</strong>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> ?�?��?�?/small>
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 所在位置</small>
                         <strong class="fs-5" id="detail-location">-</strong>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-phone text-info"></i> ?�絡?�話</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-phone text-info"></i> 聯絡電話</small>
                         <span id="detail-phone" class="fs-5 fw-bold">-</span>
                     </div>
                     <div class="col-6 col-md-6">
@@ -336,52 +337,52 @@
                         <span id="detail-risk-badge"></span>
                     </div>
                     <div class="col-6 col-md-6">
-                        <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 立�??��?</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 立案時間</small>
                         <strong id="detail-time">-</strong>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- AI ?��??��? -->
+        <!-- AI 摘要卡片 -->
         <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
             <div class="card-body p-4">
-                <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-robot"></i> AI ?��??��?</h6>
+                <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-robot"></i> AI 現況摘要</h6>
                 <p class="mb-4 text-dark" id="detail-summary" style="line-height: 1.6;">-</p>
                 
-                <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-hand-holding-heart"></i> AI ?�判?��?/h6>
+                <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-hand-holding-heart"></i> AI 預判需求</h6>
                 <p class="mb-0 text-dark" id="detail-needs" style="line-height: 1.6;">-</p>
             </div>
         </div>
 
-        <!-- 對話紀?��??�報?� (?��??�蔽) -->
+        <!-- 對話紀錄與回報區 (隱私遮蔽) -->
         <div id="privacy-shield" class="text-center py-5">
             <div class="mb-3">
                 <i class="fa-solid fa-shield-halved fa-4x text-primary opacity-50"></i>
             </div>
-            <h5 class="fw-bold text-dark">詳細資�?已被?��?保護</h5>
-            <p class="text-muted mb-0">點�?下方?��??�接案」�??��??�能�??並查?��??��?話�?填寫?�報??/p>
+            <h5 class="fw-bold text-dark">詳細資料已被隱私保護</h5>
+            <p class="text-muted mb-0">點擊下方「一鍵接案」按鈕，才能解鎖並查看完整對話與填寫回報。</p>
         </div>
 
         <div id="private-content" style="display: none;">
-            <!-- 完整對話紀??-->
-            <h6 class="fw-bold text-dark mb-3"><i class="fa-regular fa-comments text-info"></i> �?90 天跨?��?對話紀??/h6>
+            <!-- 完整對話紀錄 -->
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-regular fa-comments text-info"></i> 近 90 天跨院區對話紀錄</h6>
             <div class="chat-container mb-4 shadow-sm" id="chat-history-container"></div>
 
-            <!-- ?�懷師�??�表??-->
-            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-pen-to-square text-warning"></i> ?�懷師�???(Chaplain Notes)</h6>
+            <!-- 關懷師回報表單 -->
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-pen-to-square text-warning"></i> 關懷師回報 (Chaplain Notes)</h6>
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-0">
-                    <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此�??�您?��??��?程、�?????��?後�?建議..."></textarea>
+                    <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此記錄您的關懷過程、病患反應與後續建議..."></textarea>
                 </div>
             </div>
         </div>
 
       </div>
       <div class="modal-footer bg-white border-top-0 p-3" id="detail-actions">
-        <!-- ?��??��? -->
+        <!-- 動態按鈕 -->
       </div>
-      <!-- ?��?派�??��?(?�管?�員?��?) -->
+      <!-- 手動派案區塊 (僅管理員可見) -->
       <div id="manual-assign-container" class="px-4 pb-4" style="display: none;">
       </div>
     </div>
@@ -393,15 +394,15 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center border-0" style="border-radius: 20px;">
       <div class="modal-header bg-light border-0">
-        <h5 class="modal-title fw-bold" id="qr-modal-title">?��? QR Code</h5>
+        <h5 class="modal-title fw-bold" id="qr-modal-title">頻道 QR Code</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-5 bg-white">
-        <h4 class="mb-4 fw-bold text-dark" id="qr-hosp-name">?�院?�稱</h4>
+        <h4 class="mb-4 fw-bold text-dark" id="qr-hosp-name">醫院名稱</h4>
         <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-4">
             <canvas id="qrcode-canvas"></canvas>
         </div>
-        <p class="text-muted small">請�???�� LINE ?��?上方 QR Code ?�入專屬?�懷?��?</p>
+        <p class="text-muted small">請病患用 LINE 掃描上方 QR Code 進入專屬關懷頻道</p>
         <div class="input-group">
             <input type="text" class="form-control text-center" id="qr-url" readonly>
             <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
@@ -417,6 +418,6 @@
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <!-- QRious for QR Code -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<script src="common/dashboard.js?v=14"></script>
+<script src="common/dashboard.js?v=15"></script>
 </body>
 </html>
