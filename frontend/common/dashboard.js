@@ -368,6 +368,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.success) {
+                const idx = allCases.findIndex(c => c.id === caseId);
+                if (idx > -1) {
+                    allCases[idx].status = 'active';
+                    allCases[idx].claimed_by = chaplainUid;
+                    allCases[idx].claimed_by_name = '自己 (剛承接)';
+                }
+                updateBadgeCounts();
+                renderCases();
+
                 Swal.fire('成功接案！', '請查看完整對話並準備介入。', 'success');
                 detailModal.hide();
                 switchTab('active');
@@ -469,6 +478,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.success) {
+                const idx = allCases.findIndex(c => c.id === caseId);
+                if (idx > -1) {
+                    allCases[idx].status = 'closed';
+                    allCases[idx].chaplain_notes = notes;
+                }
+                updateBadgeCounts();
+                renderCases();
+
                 Swal.fire('已結案！', '回報已儲存', 'success');
                 detailModal.hide();
                 switchTab('closed');
@@ -497,9 +514,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.success) {
+                const idx = allCases.findIndex(c => c.id === caseId);
+                if (idx > -1) {
+                    allCases[idx].assigned_to = targetUid;
+                    const selectEl = document.getElementById('manual-assign-select');
+                    allCases[idx].assigned_to_name = selectEl.options[selectEl.selectedIndex].text;
+                    if (allCases[idx].status === 'none') allCases[idx].status = 'pending';
+                }
+                updateBadgeCounts();
+                renderCases();
+
                 Swal.fire('成功', '案件已重新指派', 'success');
                 detailModal.hide();
-                loadCases();
             } else {
                 Swal.fire('錯誤', data.message || '指派失敗', 'error');
             }
@@ -518,8 +544,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.success) {
+                allCases = allCases.filter(c => c.id !== caseId);
+                updateBadgeCounts();
+                renderCases();
+
                 Swal.fire('已刪除', '', 'success');
-                loadCases();
             } else {
                 Swal.fire('錯誤', data.message || '刪除失敗', 'error');
             }
