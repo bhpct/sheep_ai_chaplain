@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 發送資料至後端 (夾帶 UID 與歷史記憶體)
     async function sendToBackend(formData) {
-        chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊正在整理思緒...</span>';
+        chatBubble.innerHTML = window.getTransl('thinking');
         interactiveWidget.style.display = 'none';
 
         formData.append('lineUid', lineUid); // 綁定 UID
@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 conversationHistory.push({ role: 'user', text: result.data.transcript });
                 conversationHistory.push({ role: 'model', text: result.data.ai_response });
 
+                window.markGreetingDone();
                 typeText(result.data.ai_response, () => {
                     if (result.data.widget_action === 'mood_stars') {
                         interactiveWidget.style.display = 'block';
@@ -183,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error("發送失敗:", err);
-            chatBubble.innerHTML = "抱歉，咩咪羊剛剛走神了，可以請您再說一次嗎？";
+            chatBubble.innerHTML = window.getTransl('errUpload');
         }
     }
 
@@ -263,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            chatBubble.innerHTML = "請允許使用麥克風才能說話喔！";
+            chatBubble.innerHTML = window.getTransl('errMic');
         }
     }
 
@@ -279,15 +280,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRecording) return;
         
         if (!mediaRecorder) {
-            chatBubble.innerHTML = '<span class="typing-cursor">正在啟用麥克風...</span>';
+            chatBubble.innerHTML = window.getTransl('micInit');
             await initAudio(); 
             if (!mediaRecorder) return; 
             
             // 第一次授權完成，不繼續這次的錄音（因為手指在點擊授權時可能已經放開了，會導致事件錯亂）
-            chatBubble.innerHTML = "麥克風已就緒，請再次按住按鈕開始說話！";
+            chatBubble.innerHTML = window.getTransl('micReady');
             Swal.fire({
-                title: '授權成功',
-                text: '麥克風已就緒，請「再次按住畫面」開始對話！',
+                title: window.getTransl('swalAuthTitle'),
+                text: window.getTransl('swalAuthText'),
                 icon: 'success',
                 timer: 2500,
                 showConfirmButton: false
@@ -304,8 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             recordButton.classList.add('recording');
             recordButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            document.getElementById('recordStatusText').innerHTML = '<span class="text-danger">⏳ 錄音中... 放開傳送</span>';
-            chatBubble.innerHTML = '<span class="typing-cursor">咩咪羊專心聽您說...</span>';
+            document.getElementById('recordStatusText').innerHTML = window.getTransl('recording');
+            chatBubble.innerHTML = window.getTransl('listening');
             interactiveWidget.style.display = 'none';
             playBeep();
         } catch (err) {
@@ -324,15 +325,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const duration = Date.now() - recordStartTime;
             if (duration < 2000) {
                 ignoreCurrentRecording = true;
-                Swal.fire('錄音太短', '請至少按住螢幕 2 秒以上喔！', 'warning');
-                chatBubble.innerHTML = "嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？";
+                Swal.fire(window.getTransl('swalShortTitle'), window.getTransl('swalShortText'), 'warning');
+                chatBubble.innerHTML = window.getTransl('defaultGreeting');
             }
 
             mediaRecorder.stop();
             isRecording = false;
             recordButton.classList.remove('recording');
             recordButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            document.getElementById('recordStatusText').innerText = '按住螢幕說話';
+            document.getElementById('recordStatusText').innerText = window.getTransl('recordStatus');
             sheepAvatar.classList.remove('nodding'); 
         } catch (err) {
             console.error("停止錄音失敗:", err);

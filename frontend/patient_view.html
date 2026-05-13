@@ -57,8 +57,21 @@
     </script>
 </head>
 <body>
-    <div class="container mt-5 text-center" style="max-width: 600px;">
-        <h2 class="mb-3">🐑 咩咪羊 聽你說心事</h2>
+    <div class="container mt-5 text-center" style="max-width: 600px; position: relative;">
+        <!-- Language Toggle -->
+        <div class="position-absolute top-0 end-0 mt-2 me-3">
+            <select class="form-select form-select-sm rounded-pill border-secondary" id="langToggle" style="width: auto; background-color: rgba(255,255,255,0.8); backdrop-filter: blur(5px);" onchange="switchLanguage(this.value)">
+                <option value="zh">繁體中文</option>
+                <option value="en">English</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="vi">Tiếng Việt</option>
+            </select>
+        </div>
+
+        <h2 class="mb-2" id="ui-title">🐑 咩咪羊 聽你說心事</h2>
+        <div>
+            <span class="badge rounded-pill bg-info text-dark mb-3 shadow-sm" style="font-weight: 500;"><i class="fa-solid fa-earth-asia"></i> 支援多國語音 Support Multi-Language</span>
+        </div>
         <div class="badge bg-secondary mb-4 p-2" id="hosp-welcome">載入中...</div>
         
         <div class="mt-2 mb-4">
@@ -73,7 +86,7 @@
             </div>
             <!-- 動態互動元件區 (星星動畫) -->
             <div id="interactiveWidget" class="mt-3" style="display: none;">
-                <p class="text-muted small mb-2">點擊星星來告訴我吧：</p>
+                <p class="text-muted small mb-2" id="ui-stars-text">點擊星星來告訴我吧：</p>
                 <!-- 使用 flex-row-reverse 達成 Hover 時連動點亮前面的星星效果 -->
                 <div class="stars-container d-flex justify-content-center flex-row-reverse">
                     <button class="star-btn" data-val="5"><i class="fa-solid fa-star"></i></button>
@@ -90,13 +103,126 @@
                 <i class="fa-solid fa-microphone"></i>
             </button>
             <h5 id="recordStatusText" class="text-muted mt-4 fw-bold">按住螢幕說話</h5>
-            <p class="text-muted mt-1 small">請允許麥克風權限後，長按按鈕即可錄音</p>
+            <p class="text-muted mt-1 small" id="ui-mic-hint">請允許麥克風權限後，長按按鈕即可錄音</p>
         </div>
     </div>
 
     <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <script>
+        const translations = {
+            zh: {
+                title: "🐑 咩咪羊 聽你說心事",
+                starsText: "點擊星星來告訴我吧：",
+                recordStatus: "按住螢幕說話",
+                micHint: "請允許麥克風權限後，長按按鈕即可錄音",
+                defaultGreeting: "嗨，平安！我是咩咪羊。今天過得好嗎？想跟我說說話嗎？",
+                errUpload: "抱歉，咩咪羊剛剛走神了，可以請您再說一次嗎？",
+                errMic: "請允許使用麥克風才能說話喔！",
+                micInit: '<span class="typing-cursor">正在啟用麥克風...</span>',
+                micReady: "麥克風已就緒，請再次按住螢幕開始說話！",
+                recording: '<span class="text-danger">⏳ 錄音中... 放開傳送</span>',
+                listening: '<span class="typing-cursor">咩咪羊專心聽您說...</span>',
+                thinking: '<span class="typing-cursor">咩咪羊正在整理思緒...</span>',
+                swalAuthTitle: "授權成功",
+                swalAuthText: "麥克風已就緒，請「再次按住畫面」開始對話！",
+                swalShortTitle: "錄音太短",
+                swalShortText: "請至少按住螢幕 2 秒以上喔！"
+            },
+            en: {
+                title: "🐑 Miemie Sheep Listens",
+                starsText: "Tap a star to tell me:",
+                recordStatus: "Hold to Speak",
+                micHint: "Please allow microphone access and long-press to record.",
+                defaultGreeting: "Hi! I am Miemie Sheep. How are you today? Would you like to talk to me?",
+                errUpload: "Sorry, I lost my train of thought. Could you say that again?",
+                errMic: "Please allow microphone access to speak to me!",
+                micInit: '<span class="typing-cursor">Initializing microphone...</span>',
+                micReady: "Microphone is ready. Hold the screen again to speak!",
+                recording: '<span class="text-danger">⏳ Recording... Release to send</span>',
+                listening: '<span class="typing-cursor">Miemie Sheep is listening...</span>',
+                thinking: '<span class="typing-cursor">Miemie Sheep is thinking...</span>',
+                swalAuthTitle: "Success",
+                swalAuthText: "Microphone is ready. Please hold the screen again to speak!",
+                swalShortTitle: "Too Short",
+                swalShortText: "Please hold the screen for at least 2 seconds!"
+            },
+            id: {
+                title: "🐑 Miemie Sheep Mendengarkan",
+                starsText: "Ketuk bintang untuk memberi tahu saya:",
+                recordStatus: "Tahan untuk Bicara",
+                micHint: "Izinkan akses mikrofon dan tekan lama untuk merekam.",
+                defaultGreeting: "Halo! Saya Domba Miemie. Bagaimana kabarmu hari ini? Mau bicara dengan saya?",
+                errUpload: "Maaf, saya agak melamun. Bisa ulangi lagi?",
+                errMic: "Harap izinkan akses mikrofon untuk berbicara!",
+                micInit: '<span class="typing-cursor">Menginisialisasi mikrofon...</span>',
+                micReady: "Mikrofon siap. Tahan layar lagi untuk berbicara!",
+                recording: '<span class="text-danger">⏳ Merekam... Lepaskan untuk kirim</span>',
+                listening: '<span class="typing-cursor">Miemie Sheep sedang mendengarkan...</span>',
+                thinking: '<span class="typing-cursor">Miemie Sheep sedang berpikir...</span>',
+                swalAuthTitle: "Berhasil",
+                swalAuthText: "Mikrofon siap. Silakan tahan layar lagi untuk berbicara!",
+                swalShortTitle: "Terlalu Singkat",
+                swalShortText: "Harap tahan layar setidaknya 2 detik!"
+            },
+            vi: {
+                title: "🐑 Miemie Sheep Lắng Nghe",
+                starsText: "Chạm vào ngôi sao để cho tôi biết:",
+                recordStatus: "Nhấn giữ để nói",
+                micHint: "Vui lòng cho phép truy cập micro và nhấn giữ để ghi âm.",
+                defaultGreeting: "Chào bạn! Tôi là Cừu Miemie. Hôm nay bạn thế nào? Bạn có muốn nói chuyện với tôi không?",
+                errUpload: "Xin lỗi, tôi vừa mất tập trung. Bạn có thể nói lại không?",
+                errMic: "Vui lòng cho phép sử dụng micro để nói chuyện!",
+                micInit: '<span class="typing-cursor">Đang khởi tạo micro...</span>',
+                micReady: "Micro đã sẵn sàng. Nhấn giữ màn hình lần nữa để nói!",
+                recording: '<span class="text-danger">⏳ Đang ghi âm... Thả ra để gửi</span>',
+                listening: '<span class="typing-cursor">Cừu Miemie đang lắng nghe...</span>',
+                thinking: '<span class="typing-cursor">Cừu Miemie đang suy nghĩ...</span>',
+                swalAuthTitle: "Thành công",
+                swalAuthText: "Micro đã sẵn sàng. Vui lòng nhấn giữ màn hình lần nữa để nói!",
+                swalShortTitle: "Quá ngắn",
+                swalShortText: "Vui lòng nhấn giữ màn hình ít nhất 2 giây!"
+            }
+        };
+
+        let isGreeting = true; // Track if we are showing the default greeting
+
+        function switchLanguage(lang) {
+            const t = translations[lang];
+            if (!t) return;
+
+            document.getElementById('ui-title').innerText = t.title;
+            document.getElementById('ui-stars-text').innerText = t.starsText;
+            
+            // Only update record status if it's currently showing the default text (not recording/uploading)
+            const recStatus = document.getElementById('recordStatusText');
+            let isDefaultStatus = false;
+            for(let key in translations) {
+                if(recStatus.innerText === translations[key].recordStatus) isDefaultStatus = true;
+            }
+            if(isDefaultStatus) recStatus.innerText = t.recordStatus;
+            
+            document.getElementById('ui-mic-hint').innerText = t.micHint;
+
+            if (isGreeting) {
+                document.getElementById('chatBubble').innerHTML = t.defaultGreeting;
+            }
+        }
+        
+        // Expose a way for recorder.js to get current translation string
+        window.getTransl = function(key) {
+            const lang = document.getElementById('langToggle').value || 'zh';
+            return translations[lang][key] || translations['zh'][key];
+        };
+
+        // Expose a way for recorder.js to tell us the AI has spoken
+        window.markGreetingDone = function() {
+            isGreeting = false;
+        };
+    </script>
+
     <!-- 載入錄音邏輯 -->
-    <script src="common/recorder.js?v=10"></script>
+    <script src="common/recorder.js?v=11"></script>
 </body>
 </html>
