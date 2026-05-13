@@ -1,6 +1,6 @@
 const { admin, db } = require('../config/firebaseAdmin');
 const { analyzeInteraction } = require('../services/geminiService');
-const { assignCaseRoundRobin, sendLinePush } = require('../services/dispatchService');
+const { assignCaseRoundRobin, sendLinePush, sendAssignFlexMessage } = require('../services/dispatchService');
 
 async function getChatHistory(req, res) {
     try {
@@ -204,7 +204,8 @@ async function handleAudioUpload(req, res) {
             
             // 初次指派通知 (如果達標才推播)
             if (assignedChaplainUid && isOpened) {
-                sendLinePush(assignedChaplainUid, `[派案通知] 案主 ${displayName} 有一個新的關懷案件 (Level ${analysisResult.risk_level})，請盡速前往關懷師面板接案！`);
+                // sendLinePush(assignedChaplainUid, `[派案通知] 案主 ${displayName} 有一個新的關懷案件 (Level ${analysisResult.risk_level})，請盡速前往關懷師面板接案！`);
+                sendAssignFlexMessage(assignedChaplainUid, Object.assign(newCaseData, {id: docRef.id}), process.env.LIFF_ID);
             }
         } else {
             // 既有案件：更新風險與最新對話
@@ -238,7 +239,8 @@ async function handleAudioUpload(req, res) {
 
             // 如果是這次才觸發開案，補送推播
             if (justOpened && newlyAssignedUid) {
-                sendLinePush(newlyAssignedUid, `[狀態升級派案] 案主 ${displayName} 的案件已升級為 Level ${analysisResult.risk_level}，請盡速前往關懷師面板接案！`);
+                // sendLinePush(newlyAssignedUid, `[狀態升級派案] 案主 ${displayName} 的案件已升級為 Level ${analysisResult.risk_level}，請盡速前往關懷師面板接案！`);
+                sendAssignFlexMessage(newlyAssignedUid, Object.assign(currentData, {id: caseDoc.id, current_risk_level: analysisResult.risk_level, location: analysisResult.location}), process.env.LIFF_ID);
             }
         }
         // ================================

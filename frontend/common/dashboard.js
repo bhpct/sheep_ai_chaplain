@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 chaplainUid = profile.userId;
             }
             
-            loadCases();
+            await loadCases();
+            processDeepLink();
+            
             setInterval(() => {
                 if(currentTab !== 'settings' && currentTab !== 'hospitals') loadCases();
             }, 30000); 
@@ -80,6 +82,66 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('list-header').style.display = 'flex';
             casesListEl.style.display = 'block';
             renderCases();
+        }
+    }
+
+    // 處理 LIFF Deep Link 路由邏輯
+    async function processDeepLink() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const caseId = urlParams.get('caseId');
+
+        if (!action) return;
+
+        // 清除網址列參數，避免重新整理時重複觸發
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (action === 'claim' && caseId) {
+            Swal.fire({
+                title: '一鍵接案中...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            // 呼叫接案 API
+            try {
+                const res = await fetch(`/api/dashboard/cases/${caseId}/claim`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chaplainUid })
+                });
+                const data = await res.json();
+                if (data.success || data.message.includes('該案件已被接走')) {
+                    // 接案成功，或是剛好別人搶走，都切換到 active 頁籤並嘗試打開
+                    await loadCases();
+                    switchTab('active');
+                    const caseData = allCases.find(c => c.id === caseId);
+                    if (caseData) openCaseDetail(caseData);
+                    if (data.success) {
+                        Swal.fire('成功', '您已成功接案！', 'success');
+                    } else {
+                        Swal.fire('提示', '該案件已經被處理了。', 'info');
+                    }
+                } else {
+                    Swal.fire('錯誤', data.message || '接案失敗', 'error');
+                }
+            } catch (err) {
+                Swal.fire('錯誤', '網路錯誤', 'error');
+            }
+        } else if (action === 'view' && caseId) {
+            // 自動打開案件詳情
+            const caseData = allCases.find(c => c.id === caseId);
+            if (caseData) {
+                // 自動切換到對應頁籤
+                switchTab(caseData.status === 'closed' ? 'closed' : (caseData.status === 'pending' ? 'pending' : 'active'));
+                openCaseDetail(caseData);
+                const detailModalEl = document.getElementById('caseDetailModal');
+                const modal = bootstrap.Modal.getInstance(detailModalEl) || new bootstrap.Modal(detailModalEl);
+                modal.show();
+            } else {
+                Swal.fire('提示', '找不到該案件，可能已被刪除或您無權限查看', 'info');
+            }
+        } else if (action === 'my_cases') {
+            switchTab('active');
         }
     }
 

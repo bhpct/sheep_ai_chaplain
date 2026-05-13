@@ -194,16 +194,177 @@ async function sendContactCardPush(to, liffUrl) {
         }
     };
 
+// 發送派案/廣播警報通知 (Flex Message)
+async function sendAssignFlexMessage(to, caseData, liffId, isBroadcast = false) {
+    if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+        console.log(`\n[模擬 LINE Flex] 傳送給 ${Array.isArray(to) ? '多位人員' : to} 派案卡片\n`);
+        return;
+    }
+
+    const titleColor = isBroadcast ? '#dc3545' : '#17a2b8';
+    const titleText = isBroadcast ? '🚨 系統支援警報' : '🔔 案件分派通知';
+    const riskLevelStr = `Level ${caseData.current_risk_level || caseData.risk_level || 1}`;
+    const riskColor = (caseData.current_risk_level || caseData.risk_level) >= 4 ? '#dc3545' : ((caseData.current_risk_level || caseData.risk_level) >= 3 ? '#ffc107' : '#28a745');
+
+    const liffUrl = `https://liff.line.me/${liffId}?action=claim&caseId=${caseData.id}`;
+
+    const flexMsg = {
+        type: 'flex',
+        altText: `${titleText}: 案主 ${caseData.patient_name}`,
+        contents: {
+            type: 'bubble',
+            header: {
+                type: 'box',
+                layout: 'vertical',
+                backgroundColor: titleColor,
+                contents: [
+                    {
+                        type: 'text',
+                        text: titleText,
+                        color: '#ffffff',
+                        weight: 'bold',
+                        size: 'lg'
+                    }
+                ]
+            },
+            body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        margin: 'md',
+                        contents: [
+                            { type: 'text', text: '案主', color: '#aaaaaa', size: 'sm', flex: 2 },
+                            { type: 'text', text: caseData.patient_name || '未知', wrap: true, color: '#666666', size: 'sm', flex: 5 }
+                        ]
+                    },
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        margin: 'sm',
+                        contents: [
+                            { type: 'text', text: '緊急', color: '#aaaaaa', size: 'sm', flex: 2 },
+                            { type: 'text', text: riskLevelStr, color: riskColor, weight: 'bold', size: 'sm', flex: 5 }
+                        ]
+                    },
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        margin: 'sm',
+                        contents: [
+                            { type: 'text', text: '位置', color: '#aaaaaa', size: 'sm', flex: 2 },
+                            { type: 'text', text: caseData.location || '未知', wrap: true, color: '#666666', size: 'sm', flex: 5 }
+                        ]
+                    }
+                ]
+            },
+            footer: {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'button',
+                        style: 'primary',
+                        height: 'sm',
+                        color: '#007bff',
+                        action: {
+                            type: 'uri',
+                            label: '⚡ 一鍵接案',
+                            uri: liffUrl
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
     try {
-        await client.pushMessage({
-            to: to,
-            messages: [flexMsg]
-        });
-        return true;
+        if (Array.isArray(to)) {
+             if(to.length === 0) return;
+             await client.multicast({ to: to, messages: [flexMsg] });
+        } else {
+             await client.pushMessage({ to: to, messages: [flexMsg] });
+        }
     } catch (err) {
-        console.error("LINE Flex 發送失敗:", err.originalError?.response?.data || err.message);
-        throw new Error("LINE 推播發送失敗，可能原因：案主不是使用 LINE 內建瀏覽器，或是未加入/已封鎖官方帳號。");
+        console.error("LINE 發送失敗:", err);
     }
 }
 
-module.exports = { startDispatcher, assignCaseRoundRobin, sendLinePush, sendContactCardPush, runDispatchEngine };
+// 發送接案成功通知 (Flex Message)
+async function sendClaimSuccessFlexMessage(to, caseData, liffId) {
+    if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+
+    const liffUrlView = `https://liff.line.me/${liffId}?action=view&caseId=${caseData.id}`;
+    const liffUrlList = `https://liff.line.me/${liffId}?action=my_cases`;
+
+    const flexMsg = {
+        type: 'flex',
+        altText: `接案成功: ${caseData.patient_name}`,
+        contents: {
+            type: 'bubble',
+            body: {
+                type: 'box',
+                layout: 'vertical',
+                alignItems: 'center',
+                contents: [
+                    {
+                        type: 'text',
+                        text: '🎉 接案成功！',
+                        weight: 'bold',
+                        size: 'xl',
+                        color: '#28a745',
+                        margin: 'md'
+                    },
+                    {
+                        type: 'text',
+                        text: `案主 ${caseData.patient_name} 已移至您的處理中清單。`,
+                        wrap: true,
+                        size: 'sm',
+                        color: '#666666',
+                        margin: 'md',
+                        align: 'center'
+                    }
+                ]
+            },
+            footer: {
+                type: 'box',
+                layout: 'horizontal',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'button',
+                        style: 'primary',
+                        height: 'sm',
+                        color: '#17a2b8',
+                        action: {
+                            type: 'uri',
+                            label: '📖 該案資料',
+                            uri: liffUrlView
+                        }
+                    },
+                    {
+                        type: 'button',
+                        style: 'secondary',
+                        height: 'sm',
+                        action: {
+                            type: 'uri',
+                            label: '📂 我的案件',
+                            uri: liffUrlList
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
+    try {
+        await client.pushMessage({ to: to, messages: [flexMsg] });
+    } catch (err) {
+        console.error("LINE 發送失敗:", err);
+    }
+}
+
+module.exports = { startDispatcher, assignCaseRoundRobin, sendLinePush, sendContactCardPush, runDispatchEngine, sendAssignFlexMessage, sendClaimSuccessFlexMessage };

@@ -1,4 +1,5 @@
 const { admin, db } = require('../config/firebaseAdmin');
+const { sendClaimSuccessFlexMessage, sendAssignFlexMessage } = require('../services/dispatchService');
 
 // 驗證身份與權限
 async function verifyRole(uid) {
@@ -120,6 +121,10 @@ async function claimCase(req, res) {
             claimed_by: chaplainUid,
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
+
+        if (chaplainUid) {
+            sendClaimSuccessFlexMessage(chaplainUid, Object.assign(data, {id: caseId}), process.env.LIFF_ID);
+        }
 
         return res.status(200).json({ success: true, message: '接案成功！' });
     } catch (error) {
@@ -300,8 +305,8 @@ async function assignCaseManual(req, res) {
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        const { sendLinePush } = require('../services/dispatchService');
-        await sendLinePush(targetUid, `[派案通知] 管理員已將案主 ${doc.data().patient_name} 的案件指派給您，請前往面板查看。`);
+        const { sendAssignFlexMessage } = require('../services/dispatchService');
+        await sendAssignFlexMessage(targetUid, Object.assign(doc.data(), {id: caseId}), process.env.LIFF_ID);
 
         return res.status(200).json({ success: true, message: '案件已手動派發！' });
     } catch (e) {
