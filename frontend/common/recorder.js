@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startRecording = async (e) => {
         // 排除點擊到星星按鈕或其他 UI 元件的情況
-        if (e.target.closest('.star-btn') || e.target.closest('.swal2-container')) return;
+        if (e.target.closest('.star-btn') || e.target.closest('.swal2-container') || e.target.closest('#langToggle')) return;
         
         // 防呆機制：如果是手機觸控放開後，瀏覽器自動補發的假 mousedown，在 500ms 內全部忽略
         if (e.type === 'mousedown' && (Date.now() - lastTouchEndTime < 500)) return;

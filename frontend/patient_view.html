@@ -23,12 +23,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: 2rem;
         }
 
         #recordButton {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -37,7 +36,7 @@
         }
 
         #recordButton i {
-            font-size: 3rem;
+            font-size: 2rem;
         }
 
         #recordButton:active {
@@ -57,26 +56,37 @@
     </script>
 </head>
 <body>
-    <div class="container mt-5 text-center" style="max-width: 600px; position: relative;">
+    <div class="container mt-4 text-center" style="max-width: 600px;">
         <!-- Language Toggle -->
-        <div class="position-absolute top-0 end-0 mt-2 me-3">
-            <select class="form-select form-select-sm rounded-pill border-secondary" id="langToggle" style="width: auto; background-color: rgba(255,255,255,0.8); backdrop-filter: blur(5px);" onchange="switchLanguage(this.value)">
-                <option value="zh">繁體中文</option>
-                <option value="en">English</option>
-                <option value="id">Bahasa Indonesia</option>
-                <option value="vi">Tiếng Việt</option>
+        <div class="d-flex justify-content-end mb-3 pe-2">
+            <select class="form-select form-select-sm rounded-pill border-secondary shadow-sm" id="langToggle" style="width: auto; background-color: rgba(255,255,255,0.9); font-weight: 500;" onchange="switchLanguage(this.value)">
+                <option value="zh">🇹🇼 繁體中文</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="id">🇮🇩 Bahasa Indonesia</option>
+                <option value="vi">🇻🇳 Tiếng Việt</option>
             </select>
         </div>
 
-        <h2 class="mb-2" id="ui-title">🐑 咩咪羊 聽你說心事</h2>
+        <h2 class="mb-2 fw-bold text-dark" id="ui-title">🐑 咩咪羊 聽你說心事</h2>
         <div>
             <span class="badge rounded-pill bg-info text-dark mb-3 shadow-sm" style="font-weight: 500;"><i class="fa-solid fa-earth-asia"></i> 支援多國語音 Support Multi-Language</span>
         </div>
         <div class="badge bg-secondary mb-4 p-2" id="hosp-welcome">載入中...</div>
         
-        <div class="mt-2 mb-4">
+        <div class="d-flex justify-content-center align-items-center mt-2 mb-3 gap-4">
             <!-- 咩咪羊大頭貼 -->
-            <img src="common/miemie_sheep.jpg" alt="咩咪羊關懷師" class="sheep-head img-fluid" id="sheepAvatar">
+            <div>
+                <img src="common/miemie_sheep.jpg" alt="咩咪羊關懷師" class="sheep-head img-fluid" id="sheepAvatar" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover;">
+            </div>
+            
+            <!-- 麥克風區塊 -->
+            <div class="mic-button-wrapper">
+                <button id="recordButton" class="btn btn-danger shadow walkie-talkie-btn">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <h6 id="recordStatusText" class="text-muted mt-2 fw-bold mb-1">按住螢幕說話</h6>
+                <p class="text-muted mt-0 small" id="ui-mic-hint" style="font-size: 0.75rem; max-width: 120px; line-height: 1.2;">請允許麥克風權限後，長按按鈕即可錄音</p>
+            </div>
         </div>
         
         <!-- 對話氣泡區塊 -->
@@ -98,12 +108,6 @@
             </div>
         </div>
 
-        <div class="mic-button-wrapper pb-5">
-            <button id="recordButton" class="btn btn-danger shadow walkie-talkie-btn">
-                <i class="fa-solid fa-microphone"></i>
-            </button>
-            <h5 id="recordStatusText" class="text-muted mt-4 fw-bold">按住螢幕說話</h5>
-            <p class="text-muted mt-1 small" id="ui-mic-hint">請允許麥克風權限後，長按按鈕即可錄音</p>
         </div>
     </div>
 
