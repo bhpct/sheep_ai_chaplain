@@ -79,7 +79,7 @@ async function runDispatchEngine() {
     
     for (const doc of pendingCases.docs) {
         const caseData = doc.data();
-        const risk = caseData.current_risk_level;
+        const risk = caseData.current_risk_level || caseData.risk_level || 1;
         
         // 判斷時間基準：如果未曾升級過，用 created_at，否則用 last_escalated_at
         let baseTime = now; // default fallback
@@ -299,8 +299,10 @@ async function sendAssignFlexMessage(to, caseData, liffId, isBroadcast = false) 
 
     try {
         if (Array.isArray(to)) {
-             if(to.length === 0) return;
-             await client.multicast({ to: to, messages: [flexMsg] });
+             // LINE 官方要求 User ID 必須是 U 開頭且長度為 33，若包含無效 ID 會導致整個 Multicast 失敗
+             const validTo = [...new Set(to)].filter(id => id && id.startsWith('U') && id.length === 33);
+             if(validTo.length === 0) return;
+             await client.multicast({ to: validTo, messages: [flexMsg] });
         } else {
              await client.pushMessage({ to: to, messages: [flexMsg] });
         }
