@@ -142,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (action === 'my_cases') {
             switchTab('active');
+        } else if (action === 'pending_cases') {
+            switchTab('pending');
         }
     }
 
