@@ -268,6 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let maxRecordTimeout = null;
+
     const startRecording = async (e) => {
         // 排除點擊到星星按鈕或其他 UI 元件的情況
         if (e.target.closest('.star-btn') || e.target.closest('.swal2-container') || e.target.closest('#langToggle')) return;
@@ -275,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 防呆機制：如果是手機觸控放開後，瀏覽器自動補發的假 mousedown，在 500ms 內全部忽略
         if (e.type === 'mousedown' && (Date.now() - lastTouchEndTime < 500)) return;
 
-        if (e.type !== 'touchstart' && e.button !== 0) return; 
+        if (e.type !== 'touchstart' && e.type !== 'pointerdown' && e.button !== 0) return; 
         
         if (isRecording) return;
         
@@ -309,15 +311,27 @@ document.addEventListener('DOMContentLoaded', () => {
             chatBubble.innerHTML = window.getTransl('listening');
             interactiveWidget.style.display = 'none';
             playBeep();
+
+            // 強制最多錄音 60 秒防呆機制
+            if (maxRecordTimeout) clearTimeout(maxRecordTimeout);
+            maxRecordTimeout = setTimeout(() => {
+                if (isRecording) {
+                    Swal.fire('時間提醒', '單次錄音最多 60 秒，系統已自動幫您送出！', 'info');
+                    stopRecording(new Event('timeout'));
+                }
+            }, 60000);
+
         } catch (err) {
             console.error("錄音啟動失敗:", err);
         }
     };
 
     const stopRecording = (e) => {
-        if (e.type === 'touchend' || e.type === 'touchcancel') {
+        if (e.type === 'touchend' || e.type === 'touchcancel' || e.type === 'pointerup' || e.type === 'pointercancel') {
             lastTouchEndTime = Date.now();
         }
+
+        if (maxRecordTimeout) clearTimeout(maxRecordTimeout);
 
         if (!isRecording || !mediaRecorder) return;
 
@@ -356,9 +370,12 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.stop(audioContext.currentTime + 0.1); 
     }
 
-    // 改為綁定整個 document.body 來實現任意點擊觸發
-    document.body.addEventListener('mousedown', startRecording);
-    window.addEventListener('mouseup', stopRecording); 
+    // 改為綁定整個 document.body 來實現任意點擊觸發 (使用 pointer events 提升相容性)
+    document.body.addEventListener('pointerdown', startRecording, { passive: false });
+    window.addEventListener('pointerup', stopRecording); 
+    window.addEventListener('pointercancel', stopRecording);
+    
+    // 保留原本的 fallback 以防萬一
     document.body.addEventListener('touchstart', startRecording, { passive: false });
     window.addEventListener('touchend', stopRecording);
     window.addEventListener('touchcancel', stopRecording);
