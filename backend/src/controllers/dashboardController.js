@@ -329,10 +329,9 @@ async function getCaseTrend(req, res) {
             return res.status(200).json({ success: true, data: [] });
         }
 
-        // 查詢該案主自從此案建立以來的所有 CareLogs
+        // 查詢該案主自從此案建立以來的所有 CareLogs (取消 Firestore 的 orderBy 以避免 Composite Index 錯誤，改由程式內排序)
         let query = db.collection('CareLogs')
-            .where('line_uid', '==', patientUid)
-            .orderBy('createdAt', 'asc');
+            .where('line_uid', '==', patientUid);
             
         // 如果有開案時間，只抓取該開案時間之後的資料
         if (createdAt) {
@@ -340,7 +339,7 @@ async function getCaseTrend(req, res) {
         }
 
         const logsSnapshot = await query.get();
-        const trendData = [];
+        let trendData = [];
 
         logsSnapshot.forEach(doc => {
             const data = doc.data();
@@ -354,6 +353,9 @@ async function getCaseTrend(req, res) {
                 });
             }
         });
+
+        // 程式內依照時間排序
+        trendData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         return res.status(200).json({ success: true, data: trendData });
     } catch (e) {

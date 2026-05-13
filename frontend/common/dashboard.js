@@ -241,7 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detail-location').innerText = caseData.location || '未知';
         document.getElementById('detail-risk-badge').innerHTML = `
             <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
-            <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-sm" onclick="showTriageDetail('${caseData.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
+            <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-sm me-2" onclick="showTriageDetail('${caseData.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-sm" onclick="showTrendChart()"><i class="fa-solid fa-chart-line"></i> 波動圖</button>
         `;
         document.getElementById('detail-time').innerText = new Date(caseData.created_at).toLocaleString();
         
