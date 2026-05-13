@@ -37,7 +37,7 @@ async function getChatHistory(req, res) {
         // 允許讀取歷史的醫院名單：Root 本身 + 其所有子孫
         let allowedHospIds = [rootHospId, ...getDescendants(rootHospId)];
 
-        // 4. 撈出該病患所有的紀錄
+        // 4. 撈出該案主所有的紀錄
         const snapshot = await db.collection('CareLogs')
             .where('line_uid', '==', uid)
             .get();
@@ -204,7 +204,7 @@ async function handleAudioUpload(req, res) {
             
             // 初次指派通知 (如果達標才推播)
             if (assignedChaplainUid && isOpened) {
-                sendLinePush(assignedChaplainUid, `[派案通知] 病患 ${displayName} 有一個新的關懷案件 (Level ${analysisResult.risk_level})，請盡速前往關懷師面板接案！`);
+                sendLinePush(assignedChaplainUid, `[派案通知] 案主 ${displayName} 有一個新的關懷案件 (Level ${analysisResult.risk_level})，請盡速前往關懷師面板接案！`);
             }
         } else {
             // 既有案件：更新風險與最新對話
@@ -238,7 +238,7 @@ async function handleAudioUpload(req, res) {
 
             // 如果是這次才觸發開案，補送推播
             if (justOpened && newlyAssignedUid) {
-                sendLinePush(newlyAssignedUid, `[狀態升級派案] 病患 ${displayName} 的案件已升級為 Level ${analysisResult.risk_level}，請盡速前往關懷師面板接案！`);
+                sendLinePush(newlyAssignedUid, `[狀態升級派案] 案主 ${displayName} 的案件已升級為 Level ${analysisResult.risk_level}，請盡速前往關懷師面板接案！`);
             }
         }
         // ================================

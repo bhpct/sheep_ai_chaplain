@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="m-0 fw-bold ${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-dark'}">
-                        <i class="fa-brands fa-line text-success fs-6"></i> ${c.patient_name || '未知病患'}
+                        <i class="fa-brands fa-line text-success fs-6"></i> ${c.patient_name || '未知案主'}
                         <button class="btn btn-sm rounded-pill ms-2 ${c.current_risk_level === 4 && c.status === 'pending' ? 'btn-outline-light' : 'btn-outline-secondary'} py-0 px-2" style="font-size: 0.75rem;" title="複製 UID" onclick="copyToClipboard('${c.patient_uid}', event)">
                             <i class="fa-regular fa-copy"></i> UID
                         </button>
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openCaseDetail(caseData) {
         currentSelectedCase = caseData;
         
-        document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知病患'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
+        document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知案主'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
         document.getElementById('detail-location').innerText = caseData.location || '未知';
         document.getElementById('detail-risk-badge').innerHTML = `
             <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.history.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = msg.role === 'user' ? 'msg-bubble msg-user shadow-sm' : 'msg-bubble msg-ai shadow-sm';
-                    div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 病患' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.text}`;
+                    div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 案主' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.text}`;
                     chatContainerEl.appendChild(div);
                 });
                 chatContainerEl.scrollTop = chatContainerEl.scrollHeight;
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.requestContact = async function(caseId) {
         Swal.fire({
             title: '確定發送關懷小卡？',
-            text: "系統將會發送 LINE 卡片給病患索取聯絡方式。",
+            text: "系統將會發送 LINE 卡片給案主索取聯絡方式。",
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: '確定發送',

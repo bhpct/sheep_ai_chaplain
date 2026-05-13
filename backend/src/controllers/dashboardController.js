@@ -175,7 +175,7 @@ async function requestContact(req, res) {
         const patientUid = caseData.patient_uid; // 開案時的 lineUid
         
         if (!patientUid || patientUid === 'anonymous_uid') {
-            return res.status(400).json({ success: false, message: '此案件為電腦網頁匿名對話，無 LINE 帳號可發送推播！(病患必須用 LINE 開啟連結)' });
+            return res.status(400).json({ success: false, message: '此案件為電腦網頁匿名對話，無 LINE 帳號可發送推播！(案主必須用 LINE 開啟連結)' });
         }
 
         // 組裝 LIFF URL 或直接網頁 URL
@@ -192,12 +192,12 @@ async function requestContact(req, res) {
         
         try {
             await sendContactCardPush(patientUid, liffUrl);
-            return res.status(200).json({ success: true, message: '已發送關懷小卡給病患！' });
+            return res.status(200).json({ success: true, message: '已發送關懷小卡給案主！' });
         } catch (pushErr) {
             console.warn(`推播發送失敗 (可能未加好友): ${pushErr.message}`);
             return res.status(200).json({ 
                 success: true, 
-                message: '無法發送 LINE 推播 (病患可能未加好友)，但已啟動網頁攔截機制，病患下次說話時將自動於網頁彈出表單！' 
+                message: '無法發送 LINE 推播 (案主可能未加好友)，但已啟動網頁攔截機制，案主下次說話時將自動於網頁彈出表單！' 
             });
         }
 
@@ -278,7 +278,7 @@ async function assignCaseManual(req, res) {
         });
 
         const { sendLinePush } = require('../services/dispatchService');
-        await sendLinePush(targetUid, `[派案通知] 管理員已將病患 ${doc.data().patient_name} 的案件指派給您，請前往面板查看。`);
+        await sendLinePush(targetUid, `[派案通知] 管理員已將案主 ${doc.data().patient_name} 的案件指派給您，請前往面板查看。`);
 
         return res.status(200).json({ success: true, message: '手動派案成功' });
     } catch (error) {

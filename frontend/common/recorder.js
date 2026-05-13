@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 console.log("本地端開發模式：使用模擬 UID");
                 lineUid = 'mock_uid_123';
-                userDisplayName = '測試病患(Mock)';
+                userDisplayName = '測試案主(Mock)';
             } else {
                 // 從後端取得 LIFF ID
                 const configRes = await fetch('/api/config');

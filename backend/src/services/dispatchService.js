@@ -196,7 +196,7 @@ async function sendContactCardPush(to, liffUrl) {
         return true;
     } catch (err) {
         console.error("LINE Flex 發送失敗:", err.originalError?.response?.data || err.message);
-        throw new Error("LINE 推播發送失敗，可能原因：病患不是使用 LINE 內建瀏覽器，或是未加入/已封鎖官方帳號。");
+        throw new Error("LINE 推播發送失敗，可能原因：案主不是使用 LINE 內建瀏覽器，或是未加入/已封鎖官方帳號。");
     }
 }
 

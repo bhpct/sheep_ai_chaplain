@@ -103,15 +103,17 @@
         
         /* 列印用樣式 */
         @media print {
-            .navbar, #main-tabs, .btn, .modal-footer, #list-header { display: none !important; }
+            .navbar, #main-tabs, .btn, .modal-footer, #list-header, .modal-backdrop { display: none !important; }
             body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; min-height: 100vh; width: 100%; overflow: visible !important; }
+            body.modal-open { overflow: visible !important; height: auto !important; }
+            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; min-height: 100vh; width: 100%; overflow: visible !important; background: transparent !important; }
             .modal-dialog { max-width: 100%; margin: 0; }
-            .modal-content { border: none; box-shadow: none; background: white; border-radius: 0; }
+            .modal-content { border: none; box-shadow: none; background: white !important; border-radius: 0; }
             .modal-body { overflow: visible !important; height: auto !important; }
             .chat-container { max-height: none !important; overflow: visible !important; height: auto !important; border: none; background: white; page-break-inside: avoid; }
             .card { box-shadow: none !important; border: 1px solid #eee !important; page-break-inside: avoid; }
             .msg-bubble { page-break-inside: avoid; }
+            .container:not(.modal-dialog .container) { display: none !important; } /* Hide the dashboard list behind the modal */
         }
 
         /* Settings Table */
@@ -321,7 +323,7 @@
             <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 病患名稱</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 案主名稱</small>
                         <strong class="fs-5" id="detail-name">-</strong>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
@@ -373,7 +375,7 @@
             <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-pen-to-square text-warning"></i> 關懷師回報 (Chaplain Notes)</h6>
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-0">
-                    <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此記錄您的關懷過程、病患反應與後續建議..."></textarea>
+                    <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此記錄您的關懷過程、案主反應與後續建議..."></textarea>
                 </div>
             </div>
         </div>
@@ -402,7 +404,7 @@
         <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-4">
             <canvas id="qrcode-canvas"></canvas>
         </div>
-        <p class="text-muted small">請病患用 LINE 掃描上方 QR Code 進入專屬關懷頻道</p>
+        <p class="text-muted small">請案主用 LINE 掃描上方 QR Code 進入專屬關懷頻道</p>
         <div class="input-group">
             <input type="text" class="form-control text-center" id="qr-url" readonly>
             <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
