@@ -33,16 +33,21 @@ async function sendLinePush(to, text) {
 
 // 取得該醫院的所有關懷師 (包含 admin 與 chaplain)
 async function getChaplainsForHosp(hospId) {
+    // 避免 Firestore 複合索引錯誤，單純以 hosp_id 查詢，然後在記憶體中過濾 role
     const snapshot = await db.collection('Users')
         .where('hosp_id', '==', hospId)
-        .where('role', 'in', ['chaplain', 'admin', 'super_admin'])
         .get();
         
     let chaplains = [];
+    const allowedRoles = ['chaplain', 'admin', 'super_admin'];
+    
     snapshot.forEach(doc => {
-        // 使用 doc.id (line_uid 作為文件ID) 或 doc.data().line_uid
-        const uid = doc.data().line_uid || doc.id;
-        chaplains.push(uid);
+        const data = doc.data();
+        if (allowedRoles.includes(data.role)) {
+            // 使用 doc.id (line_uid 作為文件ID) 或 doc.data().line_uid
+            const uid = data.line_uid || doc.id;
+            chaplains.push(uid);
+        }
     });
     return chaplains;
 }
