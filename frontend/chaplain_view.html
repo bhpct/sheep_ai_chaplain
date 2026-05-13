@@ -104,15 +104,15 @@
         /* 列印用樣式 */
         @media print {
             .navbar, #main-tabs, .btn, .modal-footer, #list-header, .modal-backdrop { display: none !important; }
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            html, body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; overflow: visible !important; }
             body.modal-open { overflow: visible !important; height: auto !important; }
-            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; min-height: 100vh; width: 100%; overflow: visible !important; background: transparent !important; }
-            .modal-dialog { max-width: 100%; margin: 0; }
-            .modal-content { border: none; box-shadow: none; background: white !important; border-radius: 0; }
-            .modal-body { overflow: visible !important; height: auto !important; }
-            .chat-container { max-height: none !important; overflow: visible !important; height: auto !important; border: none; background: white; page-break-inside: avoid; }
-            .card { box-shadow: none !important; border: 1px solid #eee !important; page-break-inside: avoid; }
-            .msg-bubble { page-break-inside: avoid; }
+            .modal { position: static !important; display: block !important; min-height: 0; width: 100%; overflow: visible !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
+            .modal-dialog { max-width: 100% !important; margin: 0 !important; display: block !important; overflow: visible !important; }
+            .modal-content { border: none !important; box-shadow: none !important; background: white !important; border-radius: 0 !important; display: block !important; overflow: visible !important; }
+            .modal-body { padding: 0 !important; overflow: visible !important; height: auto !important; display: block !important; }
+            .chat-container { max-height: none !important; overflow: visible !important; height: auto !important; border: none !important; background: white !important; page-break-inside: auto !important; }
+            .card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid !important; margin-bottom: 20px !important; }
+            .msg-bubble { page-break-inside: avoid !important; }
             .container:not(.modal-dialog .container) { display: none !important; } /* Hide the dashboard list behind the modal */
         }
 
