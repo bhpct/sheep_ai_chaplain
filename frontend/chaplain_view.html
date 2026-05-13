@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
@@ -335,9 +337,14 @@
                         <small class="text-muted d-block mb-1"><i class="fa-solid fa-phone text-info"></i> 聯絡電話</small>
                         <span id="detail-phone" class="fs-5 fw-bold">-</span>
                     </div>
-                    <div class="col-6 col-md-6">
-                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-heart-pulse text-primary"></i> 風險評估</small>
-                        <span id="detail-risk-badge"></span>
+                    <div class="col-6 col-md-6 d-flex align-items-center">
+                        <div>
+                            <small class="text-muted d-block mb-1"><i class="fa-solid fa-heart-pulse text-primary"></i> 風險評估</small>
+                            <span id="detail-risk-badge"></span>
+                        </div>
+                        <button class="btn btn-outline-info btn-sm ms-3 mt-3 rounded-pill" onclick="showTrendChart()" title="查看情緒波動圖">
+                            <i class="fa-solid fa-chart-line"></i> 波動圖
+                        </button>
                     </div>
                     <div class="col-6 col-md-6">
                         <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 立案時間</small>
@@ -403,13 +410,29 @@
       <div class="modal-body p-5 bg-white">
         <h4 class="mb-4 fw-bold text-dark" id="qr-hosp-name">醫院名稱</h4>
         <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-4">
-            <canvas id="qrcode-canvas"></canvas>
+            <img src="" id="qr-modal-image" class="img-fluid mb-3" style="max-width: 250px;">
+            <canvas id="qrcode-canvas" style="display:none;"></canvas>
         </div>
-        <p class="text-muted small">請案主用 LINE 掃描上方 QR Code 進入專屬關懷頻道</p>
+        <p class="text-muted small">請病患/家屬掃描此 QR Code 進入該院專屬關懷頻道</p>
         <div class="input-group">
             <input type="text" class="form-control text-center" id="qr-url" readonly>
             <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 波動圖 Modal -->
+<div class="modal fade" id="trendModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content text-center border-0" style="border-radius: 20px;">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-line text-info"></i> 案主情緒波動圖 (心律圖)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-white">
+        <canvas id="trendChart"></canvas>
       </div>
     </div>
   </div>

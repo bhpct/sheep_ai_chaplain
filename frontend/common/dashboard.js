@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allCases = [];
     let currentTab = 'pending';
     let currentSelectedCase = null;
+    let trendChartInstance = null;
 
     const casesListEl = document.getElementById('cases-list');
     const settingsPanelEl = document.getElementById('settings-panel');
@@ -461,6 +462,139 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('複製失敗', err);
             Swal.fire('錯誤', '複製失敗，請手動選取', 'error');
         });
+    };
+
+    // 顯示情緒波動圖
+    window.showTrendChart = async function() {
+        if (!currentSelectedCase) return;
+
+        // 載入中特效
+        Swal.fire({
+            title: '載入波動圖中...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const res = await fetch(`/api/dashboard/cases/${currentSelectedCase.id}/trend`);
+            const data = await res.json();
+            Swal.close();
+
+            if (!data.success) {
+                return Swal.fire('錯誤', data.message || '無法取得波動圖資料', 'error');
+            }
+
+            const logs = data.data;
+            if (logs.length === 0) {
+                return Swal.fire('提示', '目前尚無足夠的互動紀錄可供分析。', 'info');
+            }
+
+            // 準備 Chart.js 資料
+            const labels = [];
+            const riskData = [];
+            const bsrsData = [];
+            const transcripts = [];
+
+            logs.forEach(log => {
+                const date = new Date(log.timestamp);
+                const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+                labels.push(timeStr);
+                riskData.push(log.risk_level);
+                bsrsData.push(log.bsrs_score || 0);
+                transcripts.push(log.transcript || '無語音紀錄');
+            });
+
+            // 開啟 Modal
+            const trendModal = new bootstrap.Modal(document.getElementById('trendModal'));
+            trendModal.show();
+
+            // 渲染圖表前，先銷毀舊的圖表實體
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            // 定義漸層顏色 (越高越紅)
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(252, 129, 129, 0.5)'); // Level 4 Red
+            gradient.addColorStop(0.3, 'rgba(246, 224, 94, 0.5)'); // Level 3 Yellow
+            gradient.addColorStop(0.6, 'rgba(99, 179, 237, 0.5)'); // Level 2 Blue
+            gradient.addColorStop(1, 'rgba(104, 211, 145, 0.5)'); // Level 1 Green
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '緊急等級 (Risk Level)',
+                        data: riskData,
+                        borderColor: '#2b6cb0',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: riskData.map(level => {
+                            if (level === 4) return '#fc8181';
+                            if (level === 3) return '#f6e05e';
+                            if (level === 2) return '#63b3ed';
+                            return '#68d391';
+                        }),
+                        pointBorderColor: '#fff',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.3 // 心電圖般的平滑感
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: 0.5,
+                            max: 4.5,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    if (value === 1) return 'L1(綠)';
+                                    if (value === 2) return 'L2(藍)';
+                                    if (value === 3) return 'L3(黃)';
+                                    if (value === 4) return 'L4(紅)';
+                                    return '';
+                                }
+                            },
+                            grid: {
+                                color: (ctx) => {
+                                    if (ctx.tick.value === 4) return 'rgba(252, 129, 129, 0.2)';
+                                    if (ctx.tick.value === 3) return 'rgba(246, 224, 94, 0.2)';
+                                    if (ctx.tick.value === 2) return 'rgba(99, 179, 237, 0.2)';
+                                    return 'rgba(0,0,0,0.05)';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const bsrs = bsrsData[index];
+                                    return `Level: ${context.raw} (BSRS: ${bsrs})`;
+                                },
+                                afterBody: function(context) {
+                                    const index = context[0].dataIndex;
+                                    let txt = transcripts[index];
+                                    if(txt.length > 30) txt = txt.substring(0, 30) + '...';
+                                    return `\n案主說：${txt}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error(e);
+            Swal.fire('錯誤', '發生未預期的錯誤', 'error');
+        }
     };
 
     window.closeCase = async function(caseId) {

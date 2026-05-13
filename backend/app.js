@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { handleAudioUpload, getChatHistory } = require('./src/controllers/audioController');
-const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual } = require('./src/controllers/dashboardController');
+const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend } = require('./src/controllers/dashboardController');
 const { startDispatcher } = require('./src/services/dispatchService');
 
 const app = express();
@@ -53,6 +53,7 @@ app.post('/api/dashboard/cases/:caseId/request-contact', requestContact);
 app.post('/api/patient/cases/:caseId/contact', submitContact);
 app.get('/api/dashboard/chaplains', getChaplains);
 app.post('/api/dashboard/cases/:caseId/assign', assignCaseManual);
+app.get('/api/dashboard/cases/:caseId/trend', getCaseTrend);
 
 // 人員權限設定 API
 const { getUsers, saveUser, deleteUser } = require('./src/controllers/userController');

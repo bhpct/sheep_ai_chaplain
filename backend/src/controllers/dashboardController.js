@@ -303,11 +303,73 @@ async function assignCaseManual(req, res) {
         const { sendLinePush } = require('../services/dispatchService');
         await sendLinePush(targetUid, `[派案通知] 管理員已將案主 ${doc.data().patient_name} 的案件指派給您，請前往面板查看。`);
 
-        return res.status(200).json({ success: true, message: '手動派案成功' });
-    } catch (error) {
-        console.error("手動派案失敗:", error);
-        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+        return res.status(200).json({ success: true, message: '案件已手動派發！' });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ success: false, message: e.message });
     }
 }
 
-module.exports = { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual };
+// 取得案主情緒波動圖資料
+async function getCaseTrend(req, res) {
+    try {
+        const { caseId } = req.params;
+        const caseRef = db.collection('Cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        
+        if (!caseDoc.exists) {
+            return res.status(404).json({ success: false, message: '找不到該案件' });
+        }
+
+        const patientUid = caseDoc.data().patient_uid;
+        const createdAt = caseDoc.data().created_at;
+
+        // 若無 patient_uid (例如舊資料或匿名)，直接回傳空資料
+        if (!patientUid || patientUid === 'anonymous_uid') {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
+        // 查詢該案主自從此案建立以來的所有 CareLogs
+        let query = db.collection('CareLogs')
+            .where('line_uid', '==', patientUid)
+            .orderBy('createdAt', 'asc');
+            
+        // 如果有開案時間，只抓取該開案時間之後的資料
+        if (createdAt) {
+            query = query.where('createdAt', '>=', createdAt);
+        }
+
+        const logsSnapshot = await query.get();
+        const trendData = [];
+
+        logsSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.createdAt) {
+                trendData.push({
+                    timestamp: data.createdAt.toDate().toISOString(),
+                    risk_level: data.risk_level || 1,
+                    bsrs_score: data.ai_triage_score ? data.ai_triage_score.bsrs_estimate : null,
+                    transcript: data.transcript || '',
+                    ai_response: data.ai_response || ''
+                });
+            }
+        });
+
+        return res.status(200).json({ success: true, data: trendData });
+    } catch (e) {
+        console.error("取得情緒波動圖失敗:", e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
+module.exports = {
+    getCases,
+    claimCase,
+    closeCase,
+    deleteCase,
+    requestContact,
+    submitContact,
+    getChaplains,
+    assignCaseManual,
+    getCaseTrend
+};
