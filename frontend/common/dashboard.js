@@ -50,13 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTab = tabName;
         
         // 更新 UI active state
-        document.querySelectorAll('#main-tabs .nav-link').forEach(el => el.classList.remove('active'));
-        if (event) {
-            const target = event.currentTarget;
-            if (target) target.classList.add('active');
-        } else {
-            document.querySelector('#main-tabs .nav-link').classList.add('active');
-        }
+        document.querySelectorAll('#main-tabs .nav-link').forEach(el => {
+            el.classList.remove('active');
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`switchTab('${tabName}')`)) {
+                el.classList.add('active');
+            }
+        });
         
         const titles = { 
             'pending': '<i class="fa-solid fa-bell text-danger"></i> 待辦案件', 
