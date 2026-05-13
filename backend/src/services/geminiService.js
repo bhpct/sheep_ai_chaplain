@@ -28,7 +28,7 @@ async function analyzeInteraction(audioBuffer, mimeType, textInput, history = []
 5. 回傳給後台系統的 \`ai_summary\`、\`ai_needs\`、\`location\` 等欄位，**必須維持使用繁體中文 (Traditional Chinese)**，以利關懷師閱讀。
 
 【評估邏輯與情資收集】
-1. 請在對話中隱式地根據 BSRS-5 與 C-SSRS 標準評估對方情緒風險。若評估為極高風險(risk_level 4)，你可以在安撫後，溫柔地詢問對方目前的所在位置或病房號碼。
+1. 請在對話中隱式地根據 BSRS-5 與 C-SSRS 標準評估對方情緒風險。若評估為極高風險(risk_level 4)，即使歷史紀錄中對方曾提過位置，因為案主可能會移動，你都「必須」在安撫後，溫柔地詢問確認對方「當下」的確切所在位置或病房號碼，不要預設沿用舊資料。
 2. 你必須總結目前的對話，產出一份「現況摘要(ai_summary)」與「預判需求(ai_needs)」，供後台的真人關懷師參考。
 
 【互動元件 (Widget)】
