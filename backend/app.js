@@ -4,7 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const { handleAudioUpload, getChatHistory } = require('./src/controllers/audioController');
 const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend } = require('./src/controllers/dashboardController');
-const { startDispatcher } = require('./src/services/dispatchService');
+const { startDispatcher, runDispatchEngine } = require('./src/services/dispatchService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +27,17 @@ app.get('/api/health', (req, res) => {
         message: "咩咪羊關懷師後端伺服器運行中！",
         timestamp: new Date().toISOString()
     });
+});
+
+// 供 Cloud Scheduler 呼叫的自動派案與升級引擎
+app.get('/api/cron/dispatch', async (req, res) => {
+    try {
+        await runDispatchEngine();
+        res.status(200).send('Dispatch engine executed successfully.');
+    } catch (error) {
+        console.error('Dispatch engine execution failed:', error);
+        res.status(500).send('Dispatch engine error.');
+    }
 });
 
 // 提供前端取得環境設定 (例如 LIFF ID)

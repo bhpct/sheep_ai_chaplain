@@ -31,12 +31,18 @@ async function sendLinePush(to, text) {
     }
 }
 
-// 取得該醫院的所有關懷師
+// 取得該醫院的所有關懷師 (包含 admin 與 chaplain)
 async function getChaplainsForHosp(hospId) {
-    const snapshot = await db.collection('Chaplains').where('hosp_id', '==', hospId).get();
+    const snapshot = await db.collection('Users')
+        .where('hosp_id', '==', hospId)
+        .where('role', 'in', ['chaplain', 'admin', 'super_admin'])
+        .get();
+        
     let chaplains = [];
     snapshot.forEach(doc => {
-        chaplains.push(doc.data().line_uid);
+        // 使用 doc.id (line_uid 作為文件ID) 或 doc.data().line_uid
+        const uid = doc.data().line_uid || doc.id;
+        chaplains.push(uid);
     });
     return chaplains;
 }
@@ -200,4 +206,4 @@ async function sendContactCardPush(to, liffUrl) {
     }
 }
 
-module.exports = { startDispatcher, assignCaseRoundRobin, sendLinePush, sendContactCardPush };
+module.exports = { startDispatcher, assignCaseRoundRobin, sendLinePush, sendContactCardPush, runDispatchEngine };
