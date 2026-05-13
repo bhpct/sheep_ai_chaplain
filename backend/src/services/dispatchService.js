@@ -95,9 +95,8 @@ async function runDispatchEngine() {
             console.log(`[系統日誌] 案件 ${doc.id} (風險 Level ${risk}) 已逾時未接案，觸發全域升級推播！`);
             
             const allChaplains = await getChaplainsForHosp(caseData.hosp_id);
-            const msg = `🚨 [系統支援警報] 有一筆 Level ${risk} 的關懷需求逾時無人接案，請所有關懷師前往戰情面板支援！`;
-            
-            await sendLinePush(allChaplains, msg);
+            // await sendLinePush(allChaplains, msg);
+            await sendAssignFlexMessage(allChaplains, Object.assign(caseData, {id: doc.id}), process.env.LIFF_ID, true);
             
             // 更新狀態
             await doc.ref.update({
@@ -193,6 +192,18 @@ async function sendContactCardPush(to, liffUrl) {
             }
         }
     };
+
+    try {
+        await client.pushMessage({
+            to: to,
+            messages: [flexMsg]
+        });
+        return true;
+    } catch (err) {
+        console.error("LINE Flex 發送失敗:", err.originalError?.response?.data || err.message);
+        throw new Error("LINE 推播發送失敗，可能原因：案主不是使用 LINE 內建瀏覽器，或是未加入/已封鎖官方帳號。");
+    }
+}
 
 // 發送派案/廣播警報通知 (Flex Message)
 async function sendAssignFlexMessage(to, caseData, liffId, isBroadcast = false) {
