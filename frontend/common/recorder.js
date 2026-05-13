@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 showCancelButton: true,
                                 confirmButtonText: '送出',
                                 cancelButtonText: '稍後再說',
+                                reverseButtons: true,
                                 inputValidator: (value) => {
                                     if (!value) return '請輸入電話號碼！';
                                     if (!/^[0-9\-]+$/.test(value)) return '格式不正確！';
