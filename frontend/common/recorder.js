@@ -269,6 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let maxRecordTimeout = null;
+    let countdownInterval = null;
+    const MAX_RECORD_SECONDS = 90;
 
     const startRecording = async (e) => {
         // 排除點擊到星星按鈕或其他 UI 元件的情況
@@ -307,19 +309,38 @@ document.addEventListener('DOMContentLoaded', () => {
             
             recordButton.classList.add('recording');
             recordButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            document.getElementById('recordStatusText').innerHTML = window.getTransl('recording');
+            const baseRecordingText = window.getTransl('recording');
+            document.getElementById('recordStatusText').innerHTML = `${baseRecordingText} <span id="countdownSpan" class="fw-bold">(${MAX_RECORD_SECONDS}s)</span>`;
             chatBubble.innerHTML = window.getTransl('listening');
             interactiveWidget.style.display = 'none';
             playBeep();
 
-            // 強制最多錄音 60 秒防呆機制
+            // 強制最多錄音防呆機制與倒數計時
             if (maxRecordTimeout) clearTimeout(maxRecordTimeout);
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            let secondsLeft = MAX_RECORD_SECONDS;
+            
+            countdownInterval = setInterval(() => {
+                secondsLeft--;
+                const countdownEl = document.getElementById('countdownSpan');
+                if (countdownEl) {
+                    countdownEl.innerText = `(${secondsLeft}s)`;
+                    // 倒數 10 秒時變為紅色閃爍
+                    if (secondsLeft <= 10) {
+                        countdownEl.style.color = 'red';
+                        countdownEl.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
+                    }
+                }
+            }, 1000);
+
             maxRecordTimeout = setTimeout(() => {
                 if (isRecording) {
-                    Swal.fire('時間提醒', '單次錄音最多 60 秒，系統已自動幫您送出！', 'info');
+                    clearInterval(countdownInterval);
+                    Swal.fire('時間提醒', `單次錄音最多 ${MAX_RECORD_SECONDS} 秒，系統已自動幫您送出！`, 'info');
                     stopRecording(new Event('timeout'));
                 }
-            }, 60000);
+            }, MAX_RECORD_SECONDS * 1000);
 
         } catch (err) {
             console.error("錄音啟動失敗:", err);
@@ -332,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (maxRecordTimeout) clearTimeout(maxRecordTimeout);
+        if (countdownInterval) clearInterval(countdownInterval);
 
         if (!isRecording || !mediaRecorder) return;
 
