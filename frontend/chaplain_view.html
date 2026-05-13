@@ -106,7 +106,8 @@
             .navbar, #main-tabs, .btn, .modal-footer, #list-header, .modal-backdrop { display: none !important; }
             html, body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; overflow: visible !important; }
             body.modal-open { overflow: visible !important; height: auto !important; }
-            .modal { position: static !important; display: block !important; min-height: 0; width: 100%; overflow: visible !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
+            .modal:not(.show) { display: none !important; }
+            .modal.show { position: static !important; display: block !important; min-height: 0; width: 100%; overflow: visible !important; background: transparent !important; padding: 0 !important; margin: 0 !important; opacity: 1 !important; }
             .modal-dialog { max-width: 100% !important; margin: 0 !important; display: block !important; overflow: visible !important; }
             .modal-content { border: none !important; box-shadow: none !important; background: white !important; border-radius: 0 !important; display: block !important; overflow: visible !important; }
             .modal-body { padding: 0 !important; overflow: visible !important; height: auto !important; display: block !important; }
