@@ -157,8 +157,31 @@ async function deleteCase(req, res) {
             return res.status(403).json({ success: false, message: '沒有刪除權限' });
         }
 
-        await db.collection('Cases').doc(caseId).delete();
-        return res.status(200).json({ success: true, message: '案件已刪除！' });
+        const caseRef = db.collection('Cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        
+        if (!caseDoc.exists) {
+            return res.status(404).json({ success: false, message: '找不到該案件' });
+        }
+
+        const patientUid = caseDoc.data().patient_uid;
+
+        // 1. 刪除案件
+        await caseRef.delete();
+
+        // 2. 刪除該案主所有的對話紀錄 (CareLogs)，強迫下次重新開案
+        if (patientUid && patientUid !== 'anonymous_uid') {
+            const logsSnapshot = await db.collection('CareLogs').where('line_uid', '==', patientUid).get();
+            if (!logsSnapshot.empty) {
+                const batch = db.batch();
+                logsSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+            }
+        }
+
+        return res.status(200).json({ success: true, message: '案件與歷史紀錄已徹底刪除！' });
     } catch (error) {
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
     }
