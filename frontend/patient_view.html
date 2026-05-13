@@ -53,6 +53,12 @@
             const cId = urlParams.get('caseId');
             window.location.href = 'contact_form.html?caseId=' + cId;
         }
+        
+        // 攔截關懷師戰情面板的操作
+        const action = urlParams.get('action');
+        if (['claim', 'view', 'my_cases', 'pending_cases'].includes(action)) {
+            window.location.href = 'chaplain_view.html' + window.location.search;
+        }
     </script>
 </head>
 <body>
