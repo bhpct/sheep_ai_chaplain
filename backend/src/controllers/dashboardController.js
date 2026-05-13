@@ -72,9 +72,15 @@ async function getCases(req, res) {
                     cases.push(caseData);
                 }
             } else {
-                // 一般關懷師：只能看同一個醫院的案件，且只能看 pending 或自己 active 的
+                // 一般關懷師：只能看同一個醫院的案件
                 if (caseData.hosp_id === userHospId) {
-                    if (caseData.status === 'pending' || (caseData.status === 'active' && caseData.claimed_by === chaplainUid)) {
+                    // 可以看： pending, none, 自己的 active, 自己的 closed
+                    if (
+                        caseData.status === 'pending' || 
+                        caseData.status === 'none' ||
+                        (caseData.status === 'active' && caseData.claimed_by === chaplainUid) ||
+                        (caseData.status === 'closed' && caseData.claimed_by === chaplainUid)
+                    ) {
                         cases.push(caseData);
                     }
                 }
