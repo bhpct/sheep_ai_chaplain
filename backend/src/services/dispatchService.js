@@ -217,7 +217,7 @@ async function sendAssignFlexMessage(to, caseData, liffId, isBroadcast = false) 
         return;
     }
 
-    const titleColor = isBroadcast ? '#dc3545' : '#17a2b8';
+    const titleColor = isBroadcast ? '#dc3545' : '#28a745';
     const titleText = isBroadcast ? '🚨 系統支援警報' : '🔔 案件分派通知';
     const riskLevelStr = `Level ${caseData.current_risk_level || caseData.risk_level || 1}`;
     const riskColor = (caseData.current_risk_level || caseData.risk_level) >= 4 ? '#dc3545' : ((caseData.current_risk_level || caseData.risk_level) >= 3 ? '#ffc107' : '#28a745');
@@ -285,7 +285,7 @@ async function sendAssignFlexMessage(to, caseData, liffId, isBroadcast = false) 
                         type: 'button',
                         style: 'primary',
                         height: 'sm',
-                        color: '#007bff',
+                        color: '#28a745',
                         action: {
                             type: 'uri',
                             label: '⚡ 一鍵接案',
@@ -356,7 +356,7 @@ async function sendClaimSuccessFlexMessage(to, caseData, liffId) {
                         type: 'button',
                         style: 'primary',
                         height: 'sm',
-                        color: '#17a2b8',
+                        color: '#28a745',
                         action: {
                             type: 'uri',
                             label: '📖 該案資料',
