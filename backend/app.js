@@ -66,6 +66,11 @@ app.get('/api/dashboard/chaplains', getChaplains);
 app.post('/api/dashboard/cases/:caseId/assign', assignCaseManual);
 app.get('/api/dashboard/cases/:caseId/trend', getCaseTrend);
 
+// 案主同意書 API
+const { checkConsent, submitConsent } = require('./src/controllers/patientController');
+app.get('/api/patient/check-consent', checkConsent);
+app.post('/api/patient/consent', submitConsent);
+
 // 人員權限設定 API
 const { getUsers, saveUser, deleteUser } = require('./src/controllers/userController');
 app.get('/api/dashboard/users', getUsers);

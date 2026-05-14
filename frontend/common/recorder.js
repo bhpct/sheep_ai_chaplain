@@ -86,10 +86,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 userDisplayName = profile.displayName;
             }
             
+            // 檢查是否為首次登入，並彈出同意書
+            const consentPassed = await checkPatientConsent();
+            if (!consentPassed) {
+                // 用戶拒絕，畫面停止於此
+                return;
+            }
+            
             await loadChatHistory();
         } catch (err) {
             console.error("LIFF 初始化失敗:", err);
             chatBubble.innerHTML = "系統連線異常，請稍後再試。";
+        }
+    }
+
+    async function checkPatientConsent() {
+        try {
+            const res = await fetch(`/api/patient/check-consent?uid=${lineUid}`);
+            const data = await res.json();
+            
+            if (data.success && !data.hasConsented) {
+                const result = await Swal.fire({
+                    title: '📋 服務說明與隱私同意書',
+                    html: `
+                        <div style="text-align: left; font-size: 0.95rem; line-height: 1.6; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+                            <p>歡迎您使用「咩咪羊聽你說心事」語音系統。為了提供您最合適的陪伴，請您了解以下事項：</p>
+                            <ol style="padding-left: 20px;">
+                                <li style="margin-bottom: 8px;"><b>AI 語音輔助分析</b><br>本系統結合人工智慧 (AI) 技術。您的語音將交由 AI 進行即時辨識與情緒分析，並給予初步回饋。</li>
+                                <li style="margin-bottom: 8px;"><b>專業關懷師介入機制</b><br>當系統評估您可能需要進一步協助時，會將對話摘要加密傳送給本院專屬關懷師，並由關懷師主動介入給予關心。</li>
+                                <li style="margin-bottom: 8px;"><b>隱私與資料保護</b><br>您的對話紀錄僅供本院關懷團隊作為提供心理與靈性關懷之依據，絕不作任何商業用途，系統亦採取嚴格加密保護。</li>
+                                <li style="margin-bottom: 8px;"><b>服務免責聲明</b><br>本系統所提供之 AI 互動，主要為心理支持與靈性陪伴性質，無法取代正式的醫療診斷、諮商或緊急救援服務。若您面臨緊急醫療需求或生命危險，請立即前往最近的醫療院所。</li>
+                            </ol>
+                            <p style="color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 5px; font-size: 0.85rem; margin-top: 15px;">
+                                若您無法同意上述約定，懇請您直接關閉本系統網頁即可，我們依然隨時為您敞開大門，謝謝您的體諒。
+                            </p>
+                        </div>
+                    `,
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showCancelButton: false,
+                    confirmButtonText: '我同意，開始使用',
+                    confirmButtonColor: '#28a745',
+                    width: '90%'
+                });
+
+                if (result.isConfirmed) {
+                    await fetch('/api/patient/consent', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid: lineUid })
+                    });
+                    return true;
+                }
+                return false;
+            }
+            return true; // 已同意過
+        } catch (e) {
+            console.error('檢查同意書失敗:', e);
+            return true; // 若檢查失敗，為避免卡住先放行
         }
     }
 
