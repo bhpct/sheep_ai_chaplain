@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/api/patient/check-consent?uid=${lineUid}`);
             const data = await res.json();
             
+            console.log("Consent API Response:", data);
+
             if (data.success && !data.hasConsented) {
                 const result = await Swal.fire({
                     title: '📋 服務說明與隱私同意書',
@@ -143,8 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return true; // 已同意過
         } catch (e) {
-            console.error('檢查同意書失敗:', e);
-            return true; // 若檢查失敗，為避免卡住先放行
+            console.error('檢查同意書失敗 詳細錯誤:', e);
+            // 暫時不要放行，讓開發者知道卡在哪
+            // return true; 
+            return false; // 強制跳出錯誤或不讓畫面繼續
         }
     }
 
