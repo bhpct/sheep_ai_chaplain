@@ -1,4 +1,4 @@
-const { db, admin } = require('../../config/firebaseAdmin');
+const { db, admin } = require('../config/firebaseAdmin');
 
 async function checkConsent(req, res) {
     try {
