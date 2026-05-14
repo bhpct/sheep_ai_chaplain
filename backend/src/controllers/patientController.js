@@ -6,25 +6,12 @@ async function checkConsent(req, res) {
         if (!uid) return res.status(400).json({ success: false, message: 'Missing uid' });
 
         const doc = await db.collection('Patients').doc(uid).get();
-        if (doc.exists && doc.data().has_consented) {
+        // 如果有 is_legacy 標記代表是之前自動補齊的，還沒真正按過同意，所以要重新跳出
+        if (doc.exists && doc.data().has_consented && !doc.data().is_legacy) {
             return res.json({ success: true, hasConsented: true });
         }
         
-        // 如果 Patients 集合中沒有紀錄，為了向下相容，檢查是否曾經有 Cases
-        // 如果有，代表是舊案主，靜默標記為已同意
-        const cases = await db.collection('Cases').where('patient_uid', '==', uid).limit(1).get();
-        if (!cases.empty) {
-            // 自動補齊紀錄
-            await db.collection('Patients').doc(uid).set({
-                line_uid: uid,
-                has_consented: true,
-                consented_at: admin.firestore.FieldValue.serverTimestamp(),
-                is_legacy: true
-            }, { merge: true });
-            return res.json({ success: true, hasConsented: true });
-        }
-
-        // 新用戶，尚未同意
+        // 新用戶或舊用戶(但未真正按過同意)，尚未同意
         return res.json({ success: true, hasConsented: false });
     } catch (err) {
         console.error("檢查同意書失敗:", err);
@@ -40,7 +27,8 @@ async function submitConsent(req, res) {
         await db.collection('Patients').doc(uid).set({
             line_uid: uid,
             has_consented: true,
-            consented_at: admin.firestore.FieldValue.serverTimestamp()
+            consented_at: admin.firestore.FieldValue.serverTimestamp(),
+            is_legacy: admin.firestore.FieldValue.delete()
         }, { merge: true });
 
         return res.json({ success: true });
