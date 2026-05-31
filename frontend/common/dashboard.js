@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtnHtml = `<button class="btn btn-sm btn-outline-danger ms-2 delete-case-btn" data-id="${c.id}"><i class="fa-solid fa-trash"></i> 刪除</button>`;
             }
 
-            const langMap = { 'zh': '繁體中文', 'tw': '台灣閩南語', 'hak': '台灣客家語', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
+        const langMap = { 'zh': '繁體中文', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
             const displayLang = c.selected_lang ? (langMap[c.selected_lang] || c.selected_lang) : '';
 
             card.innerHTML = `
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知案主'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
         document.getElementById('detail-location').innerText = caseData.location || '未知';
-        const langMap = { 'zh': '繁體中文', 'tw': '台灣閩南語', 'hak': '台灣客家語', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
+        const langMap = { 'zh': '繁體中文', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
         const displayLang = caseData.selected_lang ? (langMap[caseData.selected_lang] || caseData.selected_lang) : '';
         document.getElementById('detail-risk-badge').innerHTML = `
             <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
