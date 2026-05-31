@@ -420,6 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const div = document.createElement('div');
                     div.className = msg.role === 'user' ? 'msg-bubble msg-user shadow-sm' : 'msg-bubble msg-ai shadow-sm';
                     div.innerHTML = `<strong>${msg.role === 'user' ? '<i class="fa-solid fa-user"></i> 案主' : '<i class="fa-solid fa-robot"></i> AI'}</strong>: <br>${msg.text}`;
+                    if (msg.translation) {
+                        div.innerHTML += `<div class="mt-2 text-muted small border-top pt-1 border-secondary border-opacity-25"><i class="fa-solid fa-language"></i> *(不推送) 翻譯：${msg.translation}*</div>`;
+                    }
                     chatContainerEl.appendChild(div);
                 });
                 chatContainerEl.scrollTop = chatContainerEl.scrollHeight;

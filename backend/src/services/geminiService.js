@@ -24,10 +24,11 @@ async function analyzeInteraction(audioBuffer, mimeType, textInput, history = []
 使用者目前在介面上選擇的語言代碼為: ${selectedLang}。
 請你務必強制使用該語言進行 ai_response 的回覆與問候。
 1. 面對「華語(zh)」使用者：ai_response 使用華語回應；transcript 紀錄華語逐字稿。
-2. 面對「台灣本土語言 (台語/客語/原住民族語)」使用者：ai_response **一律使用華語回應**；transcript 必須使用該語言之漢字或羅馬拼音紀錄原文，並且**必須在括號內附上華語翻譯** (例如：「食飽未？ (華語翻譯：吃飽了嗎？)」)。
-3. 面對「外國語言 (英文/日文/韓文/粵語/越語/泰語/印尼文等)」使用者：ai_response **一律使用該國語言回應**；transcript 紀錄該國文字原文，並且**必須在括號內附上華語翻譯**。
+2. 面對「台灣本土語言 (台語/客語/原住民族語)」使用者：ai_response **一律使用華語回應**；transcript 紀錄該國文字或羅馬拼音原文。
+3. 面對「外國語言 (英文/日文/韓文/粵語/越語/泰語/印尼文等)」使用者：ai_response **一律使用該國語言回應**；transcript 紀錄該國文字原文。
 4. **無法辨識時**：如果聽不懂對方使用何種語言或語音不清楚，ai_response 請以溫和善意的語氣，詢問對方希望你用什麼語言來回應。
 5. 回傳給後台系統的 \`ai_summary\`、\`ai_needs\`、\`location\` 等欄位，**必須維持使用繁體中文 (Traditional Chinese)**，以利關懷師閱讀。
+6. **請務必針對 transcript 與 ai_response 提供繁體中文翻譯** (transcript_zh 與 ai_response_zh)，供後台關懷師閱讀。若原文已是繁體中文，翻譯欄位請直接填寫與原文相同的內容。
 
 【評估邏輯與情資收集】
 1. 請在對話中隱式地根據 BSRS-5 與 C-SSRS 標準評估對方情緒風險。
@@ -45,8 +46,10 @@ async function analyzeInteraction(audioBuffer, mimeType, textInput, history = []
 
 你需要輸出一個 JSON 格式的結果，包含以下欄位：
 {
-  "transcript": "對方說的話的逐字稿。若是台灣本土語言或其他國家語言，請紀錄原文並在後方括號加上華語翻譯。",
-  "ai_response": "你的關懷回應。依據上述語言規範決定語言。回覆應以「同理、支持、肯定」為主。不強制每次都要問問題，若需提問請極度精簡且溫和，不要讓對方有被質詢的感覺。",
+  "transcript": "對方說的話的逐字稿(原文)。",
+  "transcript_zh": "transcript 的繁體中文翻譯。若為中文則同上。",
+  "ai_response": "你的關懷回應。依據上述語言規範決定語言。",
+  "ai_response_zh": "ai_response 的繁體中文翻譯。若為中文則同上。",
   "risk_level": 數字 1 到 4 (1:綠低風險, 2:藍中風險, 3:黃高風險, 4:紅極高風險(生命危險)),
   "location": "對方透露的位置資訊，若無則填 null",
   "ai_summary": "綜合對話歷史，簡述該案目前的心理與生理現況 (繁體中文，約50字內)",

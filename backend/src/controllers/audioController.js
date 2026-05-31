@@ -61,10 +61,18 @@ async function getChatHistory(req, res) {
         const history = [];
         logs.forEach(data => {
             if (data.transcript) {
-                history.push({ role: 'user', text: data.transcript });
+                history.push({ 
+                    role: 'user', 
+                    text: data.transcript,
+                    translation: (data.selected_lang !== 'zh' && data.transcript_zh) ? data.transcript_zh : null
+                });
             }
             if (data.ai_response) {
-                history.push({ role: 'model', text: data.ai_response });
+                history.push({ 
+                    role: 'model', 
+                    text: data.ai_response,
+                    translation: (data.selected_lang !== 'zh' && data.ai_response_zh) ? data.ai_response_zh : null
+                });
             }
         });
 
@@ -147,8 +155,10 @@ async function handleAudioUpload(req, res) {
             line_uid: lineUid,
             hosp_id: hospId,
             selected_lang: selectedLang,
-            transcript: textInput || analysisResult.transcript,
-            ai_response: analysisResult.ai_response,
+            transcript: textInput ? (textInput) : (analysisResult.transcript || ''),
+            transcript_zh: textInput ? (textInput) : (analysisResult.transcript_zh || ''),
+            ai_response: analysisResult.ai_response || '',
+            ai_response_zh: analysisResult.ai_response_zh || '',
             risk_level: analysisResult.risk_level,
             ai_triage_score: analysisResult.ai_triage_score,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
