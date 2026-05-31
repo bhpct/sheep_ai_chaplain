@@ -118,6 +118,23 @@
             .card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid !important; margin-bottom: 20px !important; }
             .msg-bubble { page-break-inside: avoid !important; }
             .container:not(.modal-dialog .container) { display: none !important; } /* Hide the dashboard list behind the modal */
+            
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: block !important;
+            }
+            .modal {
+                display: none !important;
+            }
         }
 
         /* Settings Table */
@@ -128,6 +145,10 @@
             overflow: hidden;
         }
         .table-glass th { background: rgba(255,255,255,0.5); font-weight: 600; color: #4a5568; }
+        
+        .hover-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .hover-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+        .trend-chart-container { position: relative; height: 300px; width: 100%; }
     </style>
 </head>
 <body>
@@ -395,6 +416,16 @@
   </div>
 </div>
 
+<!-- 列印專用區塊 -->
+<div id="print-area" class="d-none" style="text-align: center; font-family: '微軟正黑體', sans-serif; padding: 50px;">
+    <h1 style="font-size: 3.5rem; font-weight: bold; color: #4a4a4a; margin-bottom: 20px;">需要找人陪伴聊天嗎？</h1>
+    <h2 style="font-size: 2.5rem; color: #6c757d; margin-bottom: 40px;">咩咪羊聽你說心事</h2>
+    <img src="favicon.png" style="width: 250px; height: 250px; margin-bottom: 40px; border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <h3 id="print-hosp-name" style="font-size: 3rem; font-weight: bold; color: #0d6efd; margin-bottom: 30px;">醫院名稱</h3>
+    <p style="font-size: 1.8rem; color: #4a4a4a; margin-bottom: 30px; line-height: 1.5;">請用手機掃描下方 QR Code，<br>進入專屬關懷頻道，讓咩咪羊陪伴您。</p>
+    <img src="" id="print-qr-image" style="width: 350px; height: 350px; border: 2px solid #ddd; padding: 15px; border-radius: 15px;">
+</div>
+
 <!-- QR Code Modal -->
 <div class="modal fade" id="qrModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -414,6 +445,7 @@
             <input type="text" class="form-control text-center" id="qr-url" readonly>
             <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
         </div>
+        <button class="btn btn-outline-success mt-3 w-100 rounded-pill fw-bold" onclick="window.print()"><i class="fa-solid fa-print"></i> 列印 A4 邀請卡</button>
       </div>
     </div>
   </div>

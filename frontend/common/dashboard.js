@@ -1022,10 +1022,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const qr = new QRious({
             element: canvas,
             value: url,
-            size: 250,
+            size: 350,
             level: 'H'
         });
-        document.getElementById('qr-modal-image').src = canvas.toDataURL();
+        const dataUrl = canvas.toDataURL();
+        document.getElementById('qr-modal-image').src = dataUrl;
+        document.getElementById('print-qr-image').src = dataUrl;
+        document.getElementById('print-hosp-name').innerText = hospName;
 
         const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
         qrModal.show();
