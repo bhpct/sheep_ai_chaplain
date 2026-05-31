@@ -189,6 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('displayName', userDisplayName);
         formData.append('history', JSON.stringify(conversationHistory));
 
+        const langToggle = document.getElementById('langToggle');
+        if (langToggle) {
+            formData.append('selectedLang', langToggle.value);
+        }
+
         try {
             const response = await fetch('/api/analyze-audio', {
                 method: 'POST',
