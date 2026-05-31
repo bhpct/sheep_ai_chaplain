@@ -253,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtnHtml = `<button class="btn btn-sm btn-outline-danger ms-2 delete-case-btn" data-id="${c.id}"><i class="fa-solid fa-trash"></i> 刪除</button>`;
             }
 
+            const langMap = { 'zh': '繁體中文', 'tw': '台灣閩南語', 'hak': '台灣客家語', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
+            const displayLang = c.selected_lang ? (langMap[c.selected_lang] || c.selected_lang) : '';
+
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="m-0 fw-bold ${c.current_risk_level === 4 && c.status === 'pending' ? 'text-white' : 'text-dark'}">
@@ -269,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="d-flex align-items-center flex-wrap">
                     <span class="badge bg-${getRiskColor(c.current_risk_level)} me-2 mb-2 px-3 py-2 rounded-pill shadow-sm">Level ${c.current_risk_level}</span>
                     <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 me-3 mb-2 shadow-sm" onclick="showTriageDetail('${c.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
-                    ${c.selected_lang ? `<span class="badge bg-secondary me-2 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-language"></i> ${c.selected_lang === 'zh' ? '中文' : (c.selected_lang === 'en' ? 'English' : (c.selected_lang === 'id' ? 'Bahasa Indonesia' : (c.selected_lang === 'vi' ? 'Tiếng Việt' : c.selected_lang)))}</span>` : ''}
+                    ${c.selected_lang ? `<span class="badge bg-secondary me-2 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-language"></i> ${displayLang}</span>` : ''}
                     <span class="badge bg-secondary me-2 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-hospital"></i> ${c.hosp_id}</span>
                     ${c.status === 'pending' && c.assigned_to_name ? `<span class="badge bg-warning text-dark me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-user-clock"></i> 已指派給: ${c.assigned_to_name}</span>` : ''}
                     ${c.status === 'active' && c.claimed_by_name ? `<span class="badge bg-success me-3 mb-2 px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-user-check"></i> 承接人: ${c.claimed_by_name}</span>` : ''}
@@ -303,10 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知案主'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
         document.getElementById('detail-location').innerText = caseData.location || '未知';
+        const langMap = { 'zh': '繁體中文', 'tw': '台灣閩南語', 'hak': '台灣客家語', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
+        const displayLang = caseData.selected_lang ? (langMap[caseData.selected_lang] || caseData.selected_lang) : '';
         document.getElementById('detail-risk-badge').innerHTML = `
             <span class="badge bg-${getRiskColor(caseData.current_risk_level)} px-3 py-2 rounded-pill shadow-sm me-2">Level ${caseData.current_risk_level}</span>
             <button class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 shadow-sm me-2" onclick="showTriageDetail('${caseData.id}')"><i class="fa-solid fa-magnifying-glass-chart"></i> 詳細判定</button>
-            ${caseData.selected_lang ? `<span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm me-2"><i class="fa-solid fa-language"></i> ${caseData.selected_lang === 'zh' ? '中文' : (caseData.selected_lang === 'en' ? 'English' : (caseData.selected_lang === 'id' ? 'Bahasa Indonesia' : (caseData.selected_lang === 'vi' ? 'Tiếng Việt' : caseData.selected_lang)))}</span>` : ''}
+            ${caseData.selected_lang ? `<span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm me-2"><i class="fa-solid fa-language"></i> ${displayLang}</span>` : ''}
             <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-sm" onclick="showTrendChart()"><i class="fa-solid fa-chart-line"></i> 波動圖</button>
         `;
         document.getElementById('detail-time').innerText = new Date(caseData.created_at).toLocaleString();

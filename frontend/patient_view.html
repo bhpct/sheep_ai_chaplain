@@ -67,9 +67,15 @@
         <div class="d-flex justify-content-end mb-3 pe-2">
             <select class="form-select form-select-sm rounded-pill border-secondary shadow-sm" id="langToggle" style="width: auto; background-color: rgba(255,255,255,0.9); font-weight: 500;" onchange="switchLanguage(this.value)">
                 <option value="zh">🇹🇼 繁體中文</option>
+                <option value="tw">🇹🇼 台灣閩南語 (Taiwanese)</option>
+                <option value="hak">🇹🇼 台灣客家語 (Hakka)</option>
                 <option value="en">🇺🇸 English</option>
+                <option value="ja">🇯🇵 日本語 (Japanese)</option>
+                <option value="ko">🇰🇷 한국어 (Korean)</option>
+                <option value="th">🇹🇭 ภาษาไทย (Thai)</option>
                 <option value="id">🇮🇩 Bahasa Indonesia</option>
                 <option value="vi">🇻🇳 Tiếng Việt</option>
+                <option value="tl">🇵🇭 Tagalog (Filipino)</option>
             </select>
         </div>
 
@@ -193,6 +199,114 @@
                 swalAuthText: "Micro đã sẵn sàng. Vui lòng nhấn giữ màn hình lần nữa để nói!",
                 swalShortTitle: "Quá ngắn",
                 swalShortText: "Vui lòng nhấn giữ màn hình ít nhất 2 giây!"
+            },
+            tw: {
+                title: "🐑 咩咪羊 聽你講心事",
+                starsText: "點擊星星來提我知：",
+                recordStatus: "撳住螢幕講話",
+                micHint: "請允准麥克風權限後，長按按鈕就會當錄音",
+                defaultGreeting: "平安！我是咩咪羊。今仔日過了好無？想欲跟我講講話無？",
+                errUpload: "歹勢，咩咪羊拄才無注意聽，會使請你閣講一擺無？",
+                errMic: "請允准使用麥克風才通講話喔！",
+                micInit: '<span class="typing-cursor">當咧啟用麥克風...</span>',
+                micReady: "麥克風準備好矣，請閣一擺撳住螢幕開始講話！",
+                recording: '<span class="text-danger">⏳ 錄音中... 放開傳送</span>',
+                listening: '<span class="typing-cursor">咩咪羊專心聽你講...</span>',
+                thinking: '<span class="typing-cursor">咩咪羊當咧想...</span>',
+                swalAuthTitle: "授權成功",
+                swalAuthText: "麥克風準備好矣，請「閣一擺撳住畫面」開始對話！",
+                swalShortTitle: "錄音傷短",
+                swalShortText: "請至少撳住螢幕 2 秒以上喔！"
+            },
+            hak: {
+                title: "🐑 咩咪羊 聽你講心事",
+                starsText: "點擊星星話𠊎知：",
+                recordStatus: "撳等螢幕講話",
+                micHint: "請允許麥克風權限後，長按按鈕就做得錄音",
+                defaultGreeting: "平安！𠊎係咩咪羊。今晡日過得好無？想愛同𠊎講話無？",
+                errUpload: "失禮，咩咪羊堵好無注意聽，做得請你再講一次無？",
+                errMic: "請允許使用麥克風正做得講話喔！",
+                micInit: '<span class="typing-cursor">當在啟用麥克風...</span>',
+                micReady: "麥克風準備好哩，請再撳等螢幕開始講話！",
+                recording: '<span class="text-danger">⏳ 錄音中... 放開傳送</span>',
+                listening: '<span class="typing-cursor">咩咪羊專心聽你講...</span>',
+                thinking: '<span class="typing-cursor">咩咪羊當在想...</span>',
+                swalAuthTitle: "授權成功",
+                swalAuthText: "麥克風準備好哩，請「再撳等畫面」開始對話！",
+                swalShortTitle: "錄音太短",
+                swalShortText: "請至少撳等螢幕 2 秒以上喔！"
+            },
+            ja: {
+                title: "🐑 ミェミェ羊 がお聞きします",
+                starsText: "星をタップして教えてください：",
+                recordStatus: "長押しして話す",
+                micHint: "マイクへのアクセスを許可し、ボタンを長押しして録音してください。",
+                defaultGreeting: "こんにちは！ミェミェ羊です。今日の調子はどうですか？何かお話ししませんか？",
+                errUpload: "ごめんなさい、ちょっと聞き逃してしまいました。もう一度お願いできますか？",
+                errMic: "話すにはマイクへのアクセスを許可してください！",
+                micInit: '<span class="typing-cursor">マイクを初期化しています...</span>',
+                micReady: "マイクの準備ができました。もう一度画面を長押しして話してください！",
+                recording: '<span class="text-danger">⏳ 録音中... 離して送信</span>',
+                listening: '<span class="typing-cursor">ミェミェ羊が聞いています...</span>',
+                thinking: '<span class="typing-cursor">ミェミェ羊が考えています...</span>',
+                swalAuthTitle: "成功",
+                swalAuthText: "マイクの準備ができました。もう一度画面を長押しして話してください！",
+                swalShortTitle: "短すぎます",
+                swalShortText: "少なくとも2秒間は画面を長押ししてください！"
+            },
+            ko: {
+                title: "🐑 미에미에 양이 들어드려요",
+                starsText: "별을 눌러 알려주세요:",
+                recordStatus: "길게 눌러 말하기",
+                micHint: "마이크 접근을 허용하고 버튼을 길게 눌러 녹음하세요.",
+                defaultGreeting: "안녕하세요! 저는 미에미에 양입니다. 오늘 하루 어떠셨나요? 저와 이야기 나누시겠어요?",
+                errUpload: "죄송해요, 잠시 딴생각을 했네요. 다시 한 번 말씀해 주시겠어요?",
+                errMic: "말씀하시려면 마이크 접근을 허용해주세요!",
+                micInit: '<span class="typing-cursor">마이크 초기화 중...</span>',
+                micReady: "마이크가 준비되었습니다. 다시 화면을 길게 눌러 말씀해주세요!",
+                recording: '<span class="text-danger">⏳ 녹음 중... 떼어서 전송</span>',
+                listening: '<span class="typing-cursor">미에미에 양이 듣고 있습니다...</span>',
+                thinking: '<span class="typing-cursor">미에미에 양이 생각 중입니다...</span>',
+                swalAuthTitle: "성공",
+                swalAuthText: "마이크가 준비되었습니다. 다시 화면을 길게 눌러 말씀해주세요!",
+                swalShortTitle: "너무 짧습니다",
+                swalShortText: "최소 2초 이상 화면을 길게 눌러주세요!"
+            },
+            th: {
+                title: "🐑 Miemie Sheep รับฟังคุณ",
+                starsText: "แตะดาวเพื่อบอกฉัน:",
+                recordStatus: "กดค้างเพื่อพูด",
+                micHint: "โปรดอนุญาตให้เข้าถึงไมโครโฟนและกดค้างเพื่อบันทึก",
+                defaultGreeting: "สวัสดี! ฉันคือ Miemie Sheep วันนี้คุณเป็นอย่างไรบ้าง? อยากคุยกับฉันไหม?",
+                errUpload: "ขอโทษที ฉันไม่ได้ฟังเมื่อกี้ คุณช่วยพูดอีกครั้งได้ไหม?",
+                errMic: "โปรดอนุญาตให้ใช้ไมโครโฟนเพื่อพูดคุย!",
+                micInit: '<span class="typing-cursor">กำลังเริ่มต้นไมโครโฟน...</span>',
+                micReady: "ไมโครโฟนพร้อมแล้ว กดค้างที่หน้าจออีกครั้งเพื่อพูด!",
+                recording: '<span class="text-danger">⏳ กำลังบันทึก... ปล่อยเพื่อส่ง</span>',
+                listening: '<span class="typing-cursor">Miemie Sheep กำลังฟัง...</span>',
+                thinking: '<span class="typing-cursor">Miemie Sheep กำลังคิด...</span>',
+                swalAuthTitle: "สำเร็จ",
+                swalAuthText: "ไมโครโฟนพร้อมแล้ว โปรดกดค้างที่หน้าจออีกครั้งเพื่อพูด!",
+                swalShortTitle: "สั้นเกินไป",
+                swalShortText: "โปรดกดค้างที่หน้าจออย่างน้อย 2 วินาที!"
+            },
+            tl: {
+                title: "🐑 Nakikinig si Miemie Sheep",
+                starsText: "I-tap ang bituin para sabihin sa akin:",
+                recordStatus: "Pindutin nang matagal para magsalita",
+                micHint: "Pakipayagan ang access sa mikropono at pindutin nang matagal para mag-record.",
+                defaultGreeting: "Kamusta! Ako si Miemie Sheep. Kumusta ang araw mo? Gusto mo bang makipag-usap sa akin?",
+                errUpload: "Pasensya na, nawala ako sa sarili. Pwede mo bang ulitin iyon?",
+                errMic: "Pakipayagan ang access sa mikropono para makapagsalita!",
+                micInit: '<span class="typing-cursor">Sinisimulan ang mikropono...</span>',
+                micReady: "Handa na ang mikropono. Pindutin muli ang screen para magsalita!",
+                recording: '<span class="text-danger">⏳ Nire-record... Bitawan para ipadala</span>',
+                listening: '<span class="typing-cursor">Nakikinig si Miemie Sheep...</span>',
+                thinking: '<span class="typing-cursor">Nag-iisip si Miemie Sheep...</span>',
+                swalAuthTitle: "Tagumpay",
+                swalAuthText: "Handa na ang mikropono. Pakipindot muli ang screen para magsalita!",
+                swalShortTitle: "Masyadong maikli",
+                swalShortText: "Pakipindot ang screen nang hindi bababa sa 2 segundo!"
             }
         };
 
