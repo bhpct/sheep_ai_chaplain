@@ -210,7 +210,9 @@ async function handleAudioUpload(req, res) {
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 last_escalated_at: null,
                 latest_transcript: logData.transcript,
+                latest_transcript_zh: logData.transcript_zh,
                 latest_ai_response: logData.ai_response,
+                latest_ai_response_zh: logData.ai_response_zh,
                 latest_ai_triage_score: analysisResult.ai_triage_score || {}
             };
             await casesRef.add(newCaseData);
@@ -247,7 +249,9 @@ async function handleAudioUpload(req, res) {
                 location: analysisResult.location || currentData.location,
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 latest_transcript: logData.transcript,
+                latest_transcript_zh: logData.transcript_zh,
                 latest_ai_response: logData.ai_response,
+                latest_ai_response_zh: logData.ai_response_zh,
                 latest_ai_triage_score: analysisResult.ai_triage_score || currentData.latest_ai_triage_score || {}
             });
 
