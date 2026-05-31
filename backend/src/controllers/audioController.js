@@ -81,6 +81,7 @@ async function handleAudioUpload(req, res) {
         const textInput = req.body.text; 
         const lineUid = req.body.lineUid || 'anonymous_uid'; 
         const displayName = req.body.displayName || '未知使用者';
+        const selectedLang = req.body.selectedLang || 'zh';
         
         let history = [];
         if (req.body.history) {
@@ -137,7 +138,7 @@ async function handleAudioUpload(req, res) {
             history = [];
         }
 
-        const analysisResult = await analyzeInteraction(audioBuffer, mimeType, textInput, history);
+        const analysisResult = await analyzeInteraction(audioBuffer, mimeType, textInput, history, selectedLang);
 
         const expireAt = new Date();
         expireAt.setDate(expireAt.getDate() + 7);
@@ -145,6 +146,7 @@ async function handleAudioUpload(req, res) {
         const logData = {
             line_uid: lineUid,
             hosp_id: hospId,
+            selected_lang: selectedLang,
             transcript: textInput || analysisResult.transcript,
             ai_response: analysisResult.ai_response,
             risk_level: analysisResult.risk_level,
@@ -189,6 +191,7 @@ async function handleAudioUpload(req, res) {
                 location: analysisResult.location || null,
                 ai_summary: analysisResult.ai_summary || '',
                 ai_needs: analysisResult.ai_needs || '',
+                selected_lang: selectedLang,
                 assigned_to: assignedChaplainUid,
                 claimed_by: null,
                 chaplain_notes: '',
@@ -230,6 +233,7 @@ async function handleAudioUpload(req, res) {
                 is_opened: currentData.is_opened || isOpened, // 只要曾經達標就維持開案
                 ai_summary: analysisResult.ai_summary || currentData.ai_summary,
                 ai_needs: analysisResult.ai_needs || currentData.ai_needs,
+                selected_lang: selectedLang,
                 location: analysisResult.location || currentData.location,
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 latest_transcript: logData.transcript,
