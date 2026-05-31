@@ -422,7 +422,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (duration < 2000) {
                 ignoreCurrentRecording = true;
                 Swal.fire(window.getTransl('swalShortTitle'), window.getTransl('swalShortText'), 'warning');
-                chatBubble.innerHTML = window.getTransl('defaultGreeting');
+                const lastModelMsg = conversationHistory.filter(h => h.role === 'model').pop();
+                if (lastModelMsg) {
+                    chatBubble.innerHTML = lastModelMsg.text;
+                } else {
+                    chatBubble.innerHTML = window.getTransl('defaultGreeting');
+                }
             }
 
             mediaRecorder.stop();

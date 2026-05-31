@@ -1025,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
             size: 250,
             level: 'H'
         });
+        document.getElementById('qr-modal-image').src = canvas.toDataURL();
 
         const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
         qrModal.show();
