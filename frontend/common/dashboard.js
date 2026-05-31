@@ -1049,3 +1049,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 啟動
     initLiff();
 });
+
+function printQRCode() {
+    document.body.classList.add('print-qr');
+    window.print();
+    setTimeout(() => {
+        document.body.classList.remove('print-qr');
+    }, 1000);
+}
