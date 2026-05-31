@@ -117,8 +117,12 @@
             .chat-container { max-height: none !important; overflow: visible !important; height: auto !important; border: none !important; background: white !important; page-break-inside: auto !important; }
             .card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid !important; margin-bottom: 20px !important; }
             .msg-bubble { page-break-inside: avoid !important; }
-            .container:not(.modal-dialog .container) { display: none !important; } /* Hide the dashboard list behind the modal */
-            
+            .container:not(.modal-dialog .container) { display: none !important; }
+
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
             body * {
                 visibility: hidden;
             }
@@ -130,7 +134,16 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-                display: block !important;
+                height: 100vh;
+                margin: 0;
+                padding: 20px !important;
+                box-sizing: border-box;
+                display: flex !important;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                page-break-inside: avoid;
+                page-break-after: avoid;
             }
             .modal {
                 display: none !important;
