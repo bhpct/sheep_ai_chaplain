@@ -59,9 +59,13 @@ async function saveHospital(req, res) {
         const { adminUid, hospId, hospName, parentId, openThreshold } = req.body;
         const caller = await verifyRole(adminUid);
         
-        // 只有超級管理員可以新增頻道
+        // 只有超級管理員可以隨意新增頻道，最高管理員只能在自己的院區下新增子病房
         if (caller.role !== 'super_admin') {
-            return res.status(403).json({ success: false, message: '權限不足，僅最高管理員可新增' });
+            if (caller.role === 'admin' && parentId === caller.hosp_id) {
+                // 允許 admin 建立自己醫院底下的子病房
+            } else {
+                return res.status(403).json({ success: false, message: '權限不足，最高管理員只能在所屬院區下建立子病房' });
+            }
         }
         
         if (!hospId || !hospName) {

@@ -349,6 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('detail-summary').innerText = caseData.ai_summary || '無摘要';
         document.getElementById('detail-needs').innerText = caseData.ai_needs || '無預測需求';
+
+        const assessment = caseData.ai_assessment || {};
+        document.getElementById('detail-family').innerText = assessment.family_structure || '尚未提及';
+        document.getElementById('detail-disease').innerText = assessment.disease_info || '尚未提及';
+        document.getElementById('detail-physical').innerText = assessment.physical || '尚未提及';
+        document.getElementById('detail-psychological').innerText = assessment.psychological || '尚未提及';
+        document.getElementById('detail-spiritual').innerText = assessment.spiritual || '尚未提及';
+        document.getElementById('detail-plan').innerText = assessment.plan_and_suggestions || '無';
         
         const shieldEl = document.getElementById('privacy-shield');
         const privateEl = document.getElementById('private-content');
@@ -389,6 +397,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="mb-3"><i class="fa-solid fa-lock fa-4x text-muted opacity-50"></i></div>
                 <h5 class="fw-bold text-dark">無權限查看</h5>
                 <p class="text-muted">此案件已由其他關懷師負責處理。</p>`;
+        }
+
+        // 代禱需求邏輯
+        const prayerCard = document.getElementById('prayer-request-card');
+        const prayerStatus = document.getElementById('prayer-status-text');
+        const prayerActions = document.getElementById('prayer-action-container');
+        prayerActions.innerHTML = '';
+
+        if (caseData.needs_prayer) {
+            prayerCard.style.display = 'block';
+            if (caseData.pastor_status === 'completed') {
+                prayerStatus.innerHTML = `<span class="badge bg-success"><i class="fa-solid fa-check"></i> 已完成代禱</span>`;
+            } else if (caseData.pastor_status === 'pending') {
+                prayerStatus.innerHTML = `<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> 等待牧師代禱中</span>`;
+                if (userRole === 'pastor' && caseData.pastor_assigned_to === chaplainUid) {
+                    prayerActions.innerHTML = `<button class="btn btn-success rounded-pill fw-bold shadow-sm btn-sm" onclick="completePrayer('${caseData.id}')"><i class="fa-solid fa-check"></i> 完成代禱</button>`;
+                }
+            } else {
+                prayerStatus.innerHTML = `<span class="badge bg-danger"><i class="fa-solid fa-bell"></i> 尚未指派牧師</span>`;
+                if (canViewPrivate && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'chaplain')) {
+                    prayerActions.innerHTML = `<button class="btn btn-primary rounded-pill shadow-sm btn-sm" onclick="assignPastorPrompt('${caseData.id}', '${caseData.hosp_id}')"><i class="fa-solid fa-user-plus"></i> 指派牧師</button>`;
+                }
+            }
+        } else {
+            if (canViewPrivate && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'chaplain')) {
+                prayerCard.style.display = 'block';
+                prayerStatus.innerHTML = `<span class="text-muted">目前無需求</span>`;
+                prayerActions.innerHTML = `<button class="btn btn-outline-warning rounded-pill shadow-sm btn-sm" onclick="assignPastorPrompt('${caseData.id}', '${caseData.hosp_id}')"><i class="fa-solid fa-plus"></i> 建立代禱需求</button>`;
+            } else {
+                prayerCard.style.display = 'none';
+            }
         }
 
         // 渲染手動派案區塊
@@ -789,6 +828,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.assignPastorPrompt = async function(caseId, hospId) {
+        // 先取得醫院的牧師名單
+        try {
+            const res = await fetch(`/api/dashboard/chaplains?hospId=${hospId}`);
+            const data = await res.json();
+            if (data.success) {
+                const pastors = data.chaplains.filter(c => c.role === 'pastor');
+                if (pastors.length === 0) {
+                    Swal.fire('提示', '該院區目前沒有建立牧師名單，無法指派。', 'warning');
+                    return;
+                }
+                
+                let inputOptions = {};
+                pastors.forEach(p => {
+                    inputOptions[p.uid] = p.name;
+                });
+
+                const { value: selectedUid } = await Swal.fire({
+                    title: '指派牧師',
+                    input: 'select',
+                    inputOptions: inputOptions,
+                    inputPlaceholder: '請選擇牧師',
+                    showCancelButton: true
+                });
+
+                if (selectedUid) {
+                    const assignRes = await fetch(`/api/dashboard/cases/${caseId}/assign-pastor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetUid: selectedUid })
+                    });
+                    const assignData = await assignRes.json();
+                    if (assignData.success) {
+                        Swal.fire('成功', '已發派代禱需求給該牧師', 'success');
+                        const idx = allCases.findIndex(c => c.id === caseId);
+                        if (idx > -1) {
+                            allCases[idx].needs_prayer = true;
+                            allCases[idx].pastor_status = 'pending';
+                            allCases[idx].pastor_assigned_to = selectedUid;
+                            openCaseDetail(allCases[idx]); // 重新渲染 modal
+                        }
+                    } else {
+                        Swal.fire('錯誤', assignData.message, 'error');
+                    }
+                }
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.completePrayer = async function(caseId) {
+        if (!confirm('確定已經完成代禱關懷了嗎？')) return;
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}/complete-prayer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pastorUid: chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('成功', '已標記代禱完成', 'success');
+                const idx = allCases.findIndex(c => c.id === caseId);
+                if (idx > -1) {
+                    allCases[idx].pastor_status = 'completed';
+                    openCaseDetail(allCases[idx]); // 重新渲染 modal
+                }
+            } else {
+                Swal.fire('錯誤', data.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
     // ==========================================
     // 人員權限管理模組
     // ==========================================
@@ -839,6 +953,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let roleBadge = '';
             if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">超級管理員</span>';
             else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">最高管理員</span>';
+            else if (u.role === 'pastor') roleBadge = '<span class="badge bg-info text-dark">牧師</span>';
+            else if (u.role === 'nurse') roleBadge = '<span class="badge bg-secondary">護理師</span>';
+            else if (u.role === 'social_worker') roleBadge = '<span class="badge" style="background-color: #d63384;">社工師</span>';
             else if (u.role === 'pending') roleBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> 待審核</span>';
             else roleBadge = '<span class="badge bg-success">關懷師</span>';
 

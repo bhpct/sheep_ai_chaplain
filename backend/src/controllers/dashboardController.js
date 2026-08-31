@@ -263,14 +263,14 @@ async function getChaplains(req, res) {
         const snapshot = await db.collection('Users').where('hosp_id', '==', hospId).get();
         let chaplains = [];
         snapshot.forEach(doc => {
-            chaplains.push({ uid: doc.id, name: doc.data().displayName || doc.data().name || '未知關懷師' });
+            chaplains.push({ uid: doc.id, name: doc.data().displayName || doc.data().name || '未知關懷師', role: doc.data().role });
         });
 
         // 加入超級管理員或總院管理員 (如果有跨院支援需求)
         const adminSnap = await db.collection('Users').where('role', 'in', ['super_admin', 'admin']).get();
         adminSnap.forEach(doc => {
             if (!chaplains.find(c => c.uid === doc.id)) {
-                chaplains.push({ uid: doc.id, name: `${doc.data().displayName || doc.data().name || '未知'} (管理員)` });
+                chaplains.push({ uid: doc.id, name: `${doc.data().displayName || doc.data().name || '未知'} (管理員)`, role: doc.data().role });
             }
         });
 
@@ -369,6 +369,65 @@ async function getCaseTrend(req, res) {
     }
 }
 
+// 指派牧師代禱
+async function assignPastor(req, res) {
+    try {
+        const { caseId } = req.params;
+        const { targetUid } = req.body;
+        if (!targetUid) return res.status(400).json({ success: false, message: '未指定牧師' });
+
+        const caseRef = db.collection('Cases').doc(caseId);
+        const doc = await caseRef.get();
+        if (!doc.exists) return res.status(404).json({ success: false, message: '找不到該案件' });
+
+        await caseRef.update({
+            needs_prayer: true,
+            pastor_assigned_to: targetUid,
+            pastor_status: 'pending',
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 可選：發送 Line Flex Message 通知牧師
+        const { sendAssignFlexMessage } = require('../services/dispatchService');
+        try {
+            await sendAssignFlexMessage(targetUid, Object.assign(doc.data(), {id: caseId}), process.env.LIFF_ID);
+        } catch (e) {
+            console.warn("通知牧師失敗:", e);
+        }
+
+        return res.status(200).json({ success: true, message: '已成功發派代禱需求給該牧師' });
+    } catch (e) {
+        console.error("指派牧師發生錯誤:", e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
+// 牧師標記完成代禱
+async function completePrayer(req, res) {
+    try {
+        const { caseId } = req.params;
+        const { pastorUid } = req.body;
+
+        const caseRef = db.collection('Cases').doc(caseId);
+        const doc = await caseRef.get();
+        if (!doc.exists) return res.status(404).json({ success: false, message: '找不到該案件' });
+
+        if (doc.data().pastor_assigned_to !== pastorUid) {
+            return res.status(403).json({ success: false, message: '您不是被指派的牧師' });
+        }
+
+        await caseRef.update({
+            pastor_status: 'completed',
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.status(200).json({ success: true, message: '已完成代禱！' });
+    } catch (e) {
+        console.error("完成代禱發生錯誤:", e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
 module.exports = {
     getCases,
     claimCase,
@@ -378,5 +437,7 @@ module.exports = {
     submitContact,
     getChaplains,
     assignCaseManual,
-    getCaseTrend
+    getCaseTrend,
+    assignPastor,
+    completePrayer
 };

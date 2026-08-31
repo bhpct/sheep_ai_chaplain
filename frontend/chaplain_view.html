@@ -240,14 +240,17 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small text-muted">角色權限</label>
+                            <label class="form-label small text-muted">角色</label>
                             <select class="form-select rounded-pill" id="form-role" required>
                                 <option value="chaplain">關懷師</option>
+                                <option value="pastor">牧師</option>
+                                <option value="nurse">護理師</option>
+                                <option value="social_worker">社工師</option>
                                 <option value="admin">最高管理員</option>
                                 <option value="super_admin" id="opt-superadmin">超級管理員</option>
                             </select>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
+                        <div class="col-md-1 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm"><i class="fa-solid fa-save"></i> 儲存</button>
                         </div>
                     </div>
@@ -255,7 +258,7 @@
             </div>
         </div>
 
-        <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary"></i> 目前人員名單</h5>
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary"></i> 目前人員列表</h5>
         <div class="table-responsive table-glass shadow-sm">
             <table class="table table-hover align-middle mb-0">
                 <thead>
@@ -268,13 +271,13 @@
                     </tr>
                 </thead>
                 <tbody id="users-table-body">
-                    <tr><td colspan="6" class="text-center py-4 text-muted">載入中...</td></tr>
+                    <tr><td colspan="5" class="text-center py-4 text-muted">載入中...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- 醫院頻道頁面區 (預設隱藏) -->
+    <!-- 醫院頻道管理區 (預設隱藏) -->
     <div id="hospitals-panel" style="display: none;">
         <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
@@ -282,26 +285,26 @@
                 <form id="hosp-form" onsubmit="saveHospital(event)">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">頻道代碼 (Hospital ID)</label>
-                            <input type="text" class="form-control rounded-pill" id="hosp-id" required placeholder="例如：CCH-MAIN">
+                            <label class="form-label small text-muted">頻道識別碼 (Hospital ID)</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-id" required placeholder="例如：CH-MAIN">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small text-muted">對外顯示名稱</label>
-                            <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例如：彰基 (總院)">
+                            <label class="form-label small text-muted">醫院顯示名稱</label>
+                            <input type="text" class="form-control rounded-pill" id="hosp-name" required placeholder="例如：彰化基督教(總院)">
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small text-muted">上層醫院 (可選)</label>
+                            <label class="form-label small text-muted">上層院區 (選填)</label>
                             <select class="form-select rounded-pill" id="hosp-parent">
-                                <option value="">無 (獨立體系)</option>
+                                <option value="">無（作為頂層院區）</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small text-muted">開案門檻</label>
                             <select class="form-select rounded-pill" id="hosp-threshold">
-                                <option value="1">Level 1 (綠)</option>
-                                <option value="2" selected>Level 2 (藍)</option>
-                                <option value="3">Level 3 (黃)</option>
-                                <option value="4">Level 4 (紅)</option>
+                                <option value="1">Level 1 (低)</option>
+                                <option value="2" selected>Level 2 (中)</option>
+                                <option value="3">Level 3 (高)</option>
+                                <option value="4">Level 4 (極高)</option>
                             </select>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
@@ -312,48 +315,48 @@
             </div>
         </div>
 
-        <h5 class="fw-bold mb-3"><i class="fa-solid fa-building text-primary"></i> 頻道管理與 QR Code</h5>
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-building text-primary"></i> 頻道列表與 QR Code</h5>
         <div class="row" id="hospitals-list">
             <div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>
         </div>
     </div>
 </div>
 
-<!-- 說明 Modal -->
+<!-- 開案等級說明 Modal -->
 <div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info text-info"></i> 緊急等級 (Risk Level) 說明</h5>
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info text-info"></i> 風險等級 (Risk Level) 說明</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <p class="text-muted mb-4">系統由 AI 透過語音內容自動進行 BSRS-5 與 C-SSRS 隱式檢傷評估：</p>
+        <p class="text-muted mb-4">以下是 AI 依據對話內容，依照 BSRS-5 與 C-SSRS 標準評估的風險等級說明：</p>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fff5f5; border-left: 4px solid #fc8181;">
-            <div><span class="badge bg-danger fs-6 mb-1">Level 4 (紅)</span><br><small class="text-dark">極高風險。透露輕生念頭或嚴重暴力傾向，系統會立刻發送全域警報。</small></div>
+            <div><span class="badge bg-danger fs-6 mb-1">Level 4 (極高)</span><br><small class="text-dark">疑似有立即生命危險，需緊急介入，AI 將全力詢問位置。</small></div>
         </div>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #fffff0; border-left: 4px solid #f6e05e;">
-            <div><span class="badge bg-warning text-dark fs-6 mb-1">Level 3 (黃)</span><br><small class="text-dark">高風險。嚴重憂鬱或絕望，強烈需要介入。</small></div>
+            <div><span class="badge bg-warning text-dark fs-6 mb-1">Level 3 (高)</span><br><small class="text-dark">有明顯壓力或情緒困擾，需要優先安排關懷師介入。</small></div>
         </div>
         <div class="d-flex align-items-center mb-3 p-3 rounded-3" style="background: #ebf8ff; border-left: 4px solid #63b3ed;">
-            <div><span class="badge bg-primary fs-6 mb-1">Level 2 (藍)</span><br><small class="text-dark">中風險。有明顯情緒困擾或睡眠障礙，達開案標準。</small></div>
+            <div><span class="badge bg-primary fs-6 mb-1">Level 2 (中)</span><br><small class="text-dark">有一定壓力，情緒尚穩，建議安排關懷師後續跟進。</small></div>
         </div>
         <div class="d-flex align-items-center p-3 rounded-3" style="background: #f0fff4; border-left: 4px solid #68d391;">
-            <div><span class="badge bg-success fs-6 mb-1">Level 1 (綠)</span><br><small class="text-dark">低風險。情緒平穩，系統暫不開案，列入未開案紀錄區。</small></div>
+            <div><span class="badge bg-success fs-6 mb-1">Level 1 (低)</span><br><small class="text-dark">情緒穩定，以陪伴和傾聽為主，無明顯風險指標。</small></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 案件詳情 Modal (RWD 全螢幕/彈窗) -->
+<!-- 案件詳情 Modal (RWD 全螢幕設計) -->
 <div class="modal fade" id="caseDetailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-md-down">
     <div class="modal-content">
       <div class="modal-header bg-light">
         <h5 class="modal-title fw-bold" id="detail-title">案件詳情</h5>
         <div>
-            <button class="btn btn-light rounded-circle shadow-sm me-2" onclick="window.print()" title="列印病歷"><i class="fa-solid fa-print"></i></button>
+            <button class="btn btn-light rounded-circle shadow-sm me-2" onclick="window.print()" title="列印"><i class="fa-solid fa-print"></i></button>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
       </div>
@@ -364,11 +367,11 @@
             <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 案主名稱</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 案主姓名</small>
                         <strong class="fs-5" id="detail-name">-</strong>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 所在位置</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 目前位置</small>
                         <strong class="fs-5" id="detail-location">-</strong>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
@@ -380,7 +383,7 @@
                         <span id="detail-risk-badge"></span>
                     </div>
                     <div class="col-6 col-md-6">
-                        <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 立案時間</small>
+                        <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 建立時間</small>
                         <strong id="detail-time">-</strong>
                     </div>
                 </div>
@@ -398,7 +401,63 @@
             </div>
         </div>
 
-        <!-- 對話紀錄與回報區 (隱私遮蔽) -->
+        <!-- AI 結構化評估卡片 -->
+        <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f4f8 100%);">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clipboard-list text-info"></i> AI 結構化評估報告</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-people-roof text-warning"></i> 家庭結構</small>
+                            <span id="detail-family" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-stethoscope text-danger"></i> 疾病資訊</small>
+                            <span id="detail-disease" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-person-walking text-success"></i> 身體需求</small>
+                            <span id="detail-physical" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-brain text-primary"></i> 心理需求</small>
+                            <span id="detail-psychological" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-dove text-info"></i> 靈性需求</small>
+                            <span id="detail-spiritual" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 bg-white border">
+                            <small class="text-muted d-block mb-1 fw-bold"><i class="fa-solid fa-lightbulb text-warning"></i> 建議與處置</small>
+                            <span id="detail-plan" class="text-dark small">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代禱需求卡片 -->
+        <div class="card mb-4 border-0 shadow-sm rounded-4" id="prayer-request-card" style="display: none; background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%);">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hands-praying text-warning"></i> 代禱/牧師關懷需求</h6>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <span id="prayer-status-text"><span class="text-muted">-</span></span>
+                    <div id="prayer-action-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 隱私保護遮罩 (未接案時) -->
         <div id="privacy-shield" class="text-center py-5">
             <div class="mb-3">
                 <i class="fa-solid fa-shield-halved fa-4x text-primary opacity-50"></i>
@@ -488,6 +547,6 @@
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <!-- QRious for QR Code -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<script src="common/dashboard.js?v=17"></script>
+<script src="common/dashboard.js?v=18"></script>
 </body>
 </html>

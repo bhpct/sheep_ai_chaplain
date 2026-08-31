@@ -161,6 +161,8 @@ async function handleAudioUpload(req, res) {
             ai_response_zh: analysisResult.ai_response_zh || '',
             risk_level: analysisResult.risk_level,
             ai_triage_score: analysisResult.ai_triage_score,
+            ai_assessment: analysisResult.ai_assessment || {},
+            needs_prayer: analysisResult.needs_prayer || false,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             expireAt: admin.firestore.Timestamp.fromDate(expireAt)
         };
@@ -201,6 +203,10 @@ async function handleAudioUpload(req, res) {
                 location: analysisResult.location || null,
                 ai_summary: analysisResult.ai_summary || '',
                 ai_needs: analysisResult.ai_needs || '',
+                ai_assessment: analysisResult.ai_assessment || {},
+                needs_prayer: analysisResult.needs_prayer || false,
+                pastor_assigned_to: null,
+                pastor_status: 'none',
                 selected_lang: selectedLang,
                 assigned_to: assignedChaplainUid,
                 claimed_by: null,
@@ -245,6 +251,8 @@ async function handleAudioUpload(req, res) {
                 is_opened: currentData.is_opened || isOpened, // 只要曾經達標就維持開案
                 ai_summary: analysisResult.ai_summary || currentData.ai_summary,
                 ai_needs: analysisResult.ai_needs || currentData.ai_needs,
+                ai_assessment: analysisResult.ai_assessment || currentData.ai_assessment || {},
+                needs_prayer: currentData.needs_prayer || analysisResult.needs_prayer || false,
                 selected_lang: selectedLang,
                 location: analysisResult.location || currentData.location,
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),

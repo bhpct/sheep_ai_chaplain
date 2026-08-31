@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { handleAudioUpload, getChatHistory } = require('./src/controllers/audioController');
-const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend } = require('./src/controllers/dashboardController');
+const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend, assignPastor, completePrayer } = require('./src/controllers/dashboardController');
 const { startDispatcher, runDispatchEngine } = require('./src/services/dispatchService');
 
 const app = express();
@@ -64,6 +64,8 @@ app.post('/api/dashboard/cases/:caseId/request-contact', requestContact);
 app.post('/api/patient/cases/:caseId/contact', submitContact);
 app.get('/api/dashboard/chaplains', getChaplains);
 app.post('/api/dashboard/cases/:caseId/assign', assignCaseManual);
+app.post('/api/dashboard/cases/:caseId/assign-pastor', assignPastor);
+app.post('/api/dashboard/cases/:caseId/complete-prayer', completePrayer);
 app.get('/api/dashboard/cases/:caseId/trend', getCaseTrend);
 
 // 案主同意書 API
