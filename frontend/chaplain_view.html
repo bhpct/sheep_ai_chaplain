@@ -196,6 +196,9 @@
             <li class="nav-item d-none" id="tab-admin">
                 <a class="nav-link" href="#" onclick="switchTab('closed')"><i class="fa-solid fa-folder-open"></i> 歷史/未開案</a>
             </li>
+            <li class="nav-item d-none" id="tab-statistics">
+                <a class="nav-link" href="#" onclick="switchTab('statistics')"><i class="fa-solid fa-chart-line"></i> 數據報表</a>
+            </li>
             <li class="nav-item d-none" id="tab-settings">
                 <a class="nav-link" href="#" onclick="switchTab('settings')"><i class="fa-solid fa-users-gear"></i> 人員管理</a>
             </li>
@@ -219,6 +222,45 @@
     </div>
 
     <!-- 人員設定頁面區 (預設隱藏) -->
+    
+    <!-- 數據報表區 (預設隱藏) -->
+    <div id="statistics-panel" style="display: none;">
+        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title fw-bold m-0"><i class="fa-solid fa-chart-line text-primary"></i> 跨院大數據統計</h5>
+                    <div style="width: 250px;">
+                        <select class="form-select rounded-pill" id="stats-hosp-select" onchange="loadStatistics()">
+                            <option value="">選擇院區...</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="stats-content">
+                    <div class="text-center text-muted py-5"><i class="fa-solid fa-chart-pie fa-4x mb-3 opacity-50"></i><br>請選擇左上方院區以載入數據</div>
+                </div>
+            </div>
+
+            <!-- 結案通報對象 -->
+            <div id="close-case-notify-section" style="display:none;">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-body p-3">
+                        <div class="form-check mb-2 border-bottom pb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
+                            <label class="form-check-label fw-bold text-muted" for="notify-none">
+                                不通報 (僅結案)
+                            </label>
+                        </div>
+                        <div id="notify-users-container" class="row g-2">
+                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+        
     <div id="settings-panel" style="display: none;">
         <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--glass-bg); backdrop-filter: blur(10px);">
             <div class="card-body p-4">
@@ -397,7 +439,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 結案通報對象 -->
+            <div id="close-case-notify-section" style="display:none;">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-body p-3">
+                        <div class="form-check mb-2 border-bottom pb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
+                            <label class="form-check-label fw-bold text-muted" for="notify-none">
+                                不通報 (僅結案)
+                            </label>
+                        </div>
+                        <div id="notify-users-container" class="row g-2">
+                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
 
         <!-- AI 摘要卡片 -->
@@ -454,7 +515,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 結案通報對象 -->
+            <div id="close-case-notify-section" style="display:none;">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-body p-3">
+                        <div class="form-check mb-2 border-bottom pb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
+                            <label class="form-check-label fw-bold text-muted" for="notify-none">
+                                不通報 (僅結案)
+                            </label>
+                        </div>
+                        <div id="notify-users-container" class="row g-2">
+                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
         <!-- 代禱需求卡片 -->
         <div class="card mb-4 border-0 shadow-sm rounded-4" id="prayer-request-card" style="display: none; background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%);">
@@ -465,7 +545,26 @@
                     <div id="prayer-action-container"></div>
                 </div>
             </div>
+
+            <!-- 結案通報對象 -->
+            <div id="close-case-notify-section" style="display:none;">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-body p-3">
+                        <div class="form-check mb-2 border-bottom pb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
+                            <label class="form-check-label fw-bold text-muted" for="notify-none">
+                                不通報 (僅結案)
+                            </label>
+                        </div>
+                        <div id="notify-users-container" class="row g-2">
+                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
         <!-- 隱私保護遮罩 (未接案時) -->
         <div id="privacy-shield" class="text-center py-5">
@@ -488,7 +587,26 @@
                     <textarea class="form-control border-0 rounded-4 p-3" id="chaplain-notes" rows="4" placeholder="請在此記錄您的關懷過程、案主反應與後續建議..."></textarea>
                 </div>
             </div>
+
+            <!-- 結案通報對象 -->
+            <div id="close-case-notify-section" style="display:none;">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-body p-3">
+                        <div class="form-check mb-2 border-bottom pb-2">
+                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
+                            <label class="form-check-label fw-bold text-muted" for="notify-none">
+                                不通報 (僅結案)
+                            </label>
+                        </div>
+                        <div id="notify-users-container" class="row g-2">
+                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
       </div>
       <div class="modal-footer bg-white border-top-0 p-3" id="detail-actions">

@@ -172,15 +172,15 @@ async function handleAudioUpload(req, res) {
 
         const docRef = await db.collection('CareLogs').add(logData);
 
-        // 讀取醫院專屬開案門檻 (預設 Level 2)
-        let openThreshold = 2;
+        // 讀取醫院開案門檻 (預設 Level 3)
+        let openThreshold = 3;
         try {
             const hospDoc = await db.collection('Hospitals').doc(hospId).get();
             if (hospDoc.exists && hospDoc.data().open_threshold) {
                 openThreshold = parseInt(hospDoc.data().open_threshold);
             }
         } catch (e) {
-            console.warn(`無法取得醫院 ${hospId} 的門檻設定，使用預設值 2`, e);
+            console.warn(`無法取得 ${hospId} 門檻設定，使用預設值 3`, e);
         }
 
         // ===== 派案系統邏輯 (Phase 5 & 6) =====

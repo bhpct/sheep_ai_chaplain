@@ -203,6 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('tab-settings').classList.remove('d-none');
                     document.getElementById('tab-hospitals').classList.remove('d-none');
                     document.getElementById('tab-admin').classList.remove('d-none');
+                    const tabStats = document.getElementById('tab-statistics');
+                    if(tabStats) tabStats.classList.remove('d-none');
                     
                     // 最高管理員無法新增超級管理員
                     const optSuperadmin = document.getElementById('opt-superadmin');
@@ -259,7 +261,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filtered.forEach(c => {
+        let myCases = [];
+        let otherCases = [];
+        if (currentTab === 'active' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'pastor')) {
+            myCases = filtered.filter(c => c.claimed_by === chaplainUid);
+            otherCases = filtered.filter(c => c.claimed_by !== chaplainUid);
+            
+            if (myCases.length > 0) {
+                casesListEl.innerHTML += '<h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-user-check"></i> 我的案件</h6>';
+                myCases.forEach(c => { casesListEl.appendChild(createCaseCard(c)); });
+            }
+            if (otherCases.length > 0) {
+                casesListEl.innerHTML += '<h6 class="fw-bold text-secondary mb-3 mt-4"><i class="fa-solid fa-users"></i> 其他案件 (主管視角)</h6>';
+                otherCases.forEach(c => { casesListEl.appendChild(createCaseCard(c)); });
+            }
+        } else {
+            filtered.forEach(c => { casesListEl.appendChild(createCaseCard(c)); });
+        }
+    }
+
+    function createCaseCard(c) {
             const card = document.createElement('div');
             // 高風險加強顯示
             let extraClass = '';
@@ -314,8 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 openCaseDetail(c);
             });
-            casesListEl.appendChild(card);
-        });
+            return card;
     }
 
     function getRiskColor(level) {
@@ -382,26 +402,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (caseData.status === 'pending' && caseData.is_opened) {
             shieldEl.style.display = 'block';
             privateEl.style.display = 'none';
+            const notifySec = document.getElementById('close-case-notify-section');
+            if(notifySec) notifySec.style.display = 'none';
             actionsEl.innerHTML = `<button class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm py-2" onclick="claimCase('${caseData.id}')"><i class="fa-solid fa-hand-holding-heart"></i> 我要一鍵接案</button>`;
         } else if (canViewPrivate) {
             shieldEl.style.display = 'none';
             privateEl.style.display = 'block';
             
             if (caseData.status === 'active') {
+                const notifySec = document.getElementById('close-case-notify-section');
+                if(notifySec) notifySec.style.display = 'block';
+                loadNotifyUsers(caseData.hosp_id);
                 actionsEl.innerHTML = `
                     <button class="btn btn-outline-info rounded-pill w-100 fw-bold shadow-sm py-2 mb-2" onclick="requestContact('${caseData.id}')">
                         <i class="fa-regular fa-paper-plane"></i> 傳送關懷小卡 (索取聯絡方式)
+                    </button>
+                    <button class="btn btn-warning rounded-pill w-100 fw-bold shadow-sm py-2 mb-2 text-dark" onclick="saveCaseNote('${caseData.id}')">
+                        <i class="fa-solid fa-floppy-disk"></i> 儲存草稿 (不結案)
                     </button>
                     <button class="btn btn-success rounded-pill w-100 fw-bold shadow-sm py-2" onclick="closeCase('${caseData.id}')">
                         <i class="fa-solid fa-check"></i> 儲存回報並結案
                     </button>
                 `;
+            } else {
+                const notifySec = document.getElementById('close-case-notify-section');
+                if(notifySec) notifySec.style.display = 'none';
             }
             
             loadChatHistory(caseData.patient_uid, caseData.hosp_id);
         } else {
             shieldEl.style.display = 'block';
             privateEl.style.display = 'none';
+            const notifySec = document.getElementById('close-case-notify-section');
+            if(notifySec) notifySec.style.display = 'none';
             shieldEl.innerHTML = `
                 <div class="mb-3"><i class="fa-solid fa-lock fa-4x text-muted opacity-50"></i></div>
                 <h5 class="fw-bold text-dark">無權限查看</h5>
@@ -743,6 +776,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+
+    window.saveCaseNote = async function(caseId) {
+        const notes = document.getElementById('chaplain-notes').value;
+        try {
+            const res = await fetch(`/api/dashboard/cases/${caseId}/note`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已暫存', '筆記已儲存', 'success');
+                const idx = allCases.findIndex(c => c.id === caseId);
+                if (idx > -1) allCases[idx].chaplain_notes = notes;
+            } else {
+                Swal.fire('錯誤', data.message || '儲存失敗', 'error');
+            }
+        } catch (e) { Swal.fire('錯誤', '網路錯誤', 'error'); }
+    };
+
+    window.toggleNotifyNone = function(checkbox) {
+        if (checkbox.checked) {
+            document.querySelectorAll('.notify-checkbox').forEach(cb => cb.checked = false);
+        }
+    };
+
+    window.loadNotifyUsers = async function(hospId) {
+        const container = document.getElementById('notify-users-container');
+        if(!container) return;
+        container.innerHTML = '<div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>';
+        try {
+            const res = await fetch(`/api/dashboard/chaplains?hospId=${hospId}`);
+            const data = await res.json();
+            if (data.success && data.chaplains) {
+                container.innerHTML = '';
+                const others = data.chaplains.filter(c => c.uid !== chaplainUid);
+                if (others.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-muted small">此院區目前無其他可通報人員</div>';
+                    return;
+                }
+                others.forEach(user => {
+                    const roleLabels = user.roles.map(r => {
+                        const map = {'super_admin':'超級管理員', 'admin':'最高管理員', 'pastor':'牧師', 'nurse':'護理師', 'social_worker':'社工師', 'chaplain':'關懷師'};
+                        return map[r] || r;
+                    }).join(', ');
+                    container.innerHTML += `
+                        <div class="col-12 col-md-6">
+                            <div class="form-check border rounded p-2 bg-light">
+                                <input class="form-check-input ms-1 notify-checkbox" type="checkbox" value="${user.uid}" id="notify-${user.uid}" onchange="document.getElementById('notify-none').checked = false;">
+                                <label class="form-check-label w-100 ps-2" style="cursor:pointer;" for="notify-${user.uid}">
+                                    <div class="fw-bold text-dark">${user.name}</div>
+                                    <div class="small text-muted">${roleLabels}</div>
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        } catch (e) {
+            container.innerHTML = '<div class="col-12 text-danger small">載入失敗</div>';
+        }
+    };
+
     window.closeCase = async function(caseId) {
         const notes = document.getElementById('chaplain-notes').value;
         if (!notes) {
@@ -750,11 +846,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const isNone = document.getElementById('notify-none').checked;
+        const selectedUids = Array.from(document.querySelectorAll('.notify-checkbox:checked')).map(cb => cb.value);
+        if (!isNone && selectedUids.length === 0) {
+            Swal.fire('提示', '請勾選結案通報對象，或勾選「不通報」', 'warning');
+            return;
+        }
+
+        if (!confirm('確定要儲存回報並結案嗎？')) return;
+
         try {
             const res = await fetch(`/api/dashboard/cases/${caseId}/close`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chaplainUid, chaplainNotes: notes })
+                body: JSON.stringify({ chaplainUid, notes, notifyUids: selectedUids })
             });
             const data = await res.json();
             if (data.success) {
@@ -765,7 +870,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 updateBadgeCounts();
                 renderCases();
-
                 Swal.fire('已結案！', '回報已儲存', 'success');
                 detailModal.hide();
                 switchTab('closed');
@@ -776,6 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Swal.fire('錯誤', '網路錯誤', 'error');
         }
     };
+
 
     window.assignCaseManual = async function(caseId) {
         const targetUid = document.getElementById('manual-assign-select').value;
@@ -1532,3 +1637,75 @@ function printQRCode() {
         document.body.classList.remove('print-qr');
     }, 1000);
 }
+
+    window.initStatistics = async function() {
+        const select = document.getElementById('stats-hosp-select');
+        select.innerHTML = '<option value="">載入中...</option>';
+        try {
+            const res = await fetch(`/api/dashboard/users?adminUid=${chaplainUid}`);
+            const data = await res.json();
+            if (data.success && data.hospitals) {
+                select.innerHTML = '<option value="">請選擇院區...</option>';
+                data.hospitals.forEach(h => {
+                    select.innerHTML += `<option value="${h.id}">${h.name}</option>`;
+                });
+                
+                if (data.hospitals.length > 0) {
+                    select.value = data.hospitals[0].id;
+                    loadStatistics();
+                }
+            }
+        } catch (e) {
+            select.innerHTML = '<option value="">載入失敗</option>';
+        }
+    };
+
+    window.loadStatistics = async function() {
+        const hospId = document.getElementById('stats-hosp-select').value;
+        const content = document.getElementById('stats-content');
+        if (!hospId) {
+            content.innerHTML = '<div class="text-center text-muted py-5"><i class="fa-solid fa-chart-pie fa-4x mb-3 opacity-50"></i><br>請選擇左上方院區以載入數據</div>';
+            return;
+        }
+
+        content.innerHTML = '<div class="text-center text-muted py-5"><i class="fa-solid fa-spinner fa-spin fa-3x mb-3"></i><br>數據計算中...</div>';
+        try {
+            const res = await fetch(`/api/dashboard/statistics?hospId=${hospId}`);
+            const data = await res.json();
+            if (data.success) {
+                const d = data.data;
+                content.innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center border shadow-sm">
+                                <h6 class="text-muted mb-2">總開案數 (含未正式派案)</h6>
+                                <h2 class="fw-bold text-dark mb-0">${d.totalOpened}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center border shadow-sm">
+                                <h6 class="text-muted mb-2">目前待辦</h6>
+                                <h2 class="fw-bold text-danger mb-0">${d.totalPending}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center border shadow-sm">
+                                <h6 class="text-muted mb-2">處理中</h6>
+                                <h2 class="fw-bold text-success mb-0">${d.totalActive}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center border shadow-sm">
+                                <h6 class="text-muted mb-2">已結案</h6>
+                                <h2 class="fw-bold text-secondary mb-0">${d.totalClosed}</h2>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `<div class="text-danger p-4 text-center">無法取得數據: ${data.message}</div>`;
+            }
+        } catch (e) {
+            content.innerHTML = '<div class="text-danger p-4 text-center">網路錯誤，無法載入報表。</div>';
+        }
+    };

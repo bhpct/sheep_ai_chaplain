@@ -132,21 +132,78 @@ async function claimCase(req, res) {
     }
 }
 
+// 儲存關懷師筆記 (草稿)
+async function updateCaseNote(req, res) {
+    try {
+        const { caseId } = req.params;
+        const { notes } = req.body;
+        
+        const caseRef = db.collection('Cases').doc(caseId);
+        await caseRef.update({
+            chaplain_notes: notes || '',
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        return res.status(200).json({ success: true, message: '紀錄已暫存！' });
+    } catch (error) {
+        console.error("暫存筆記失敗:", error);
+        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+    }
+}
+
 // 關懷師回報與結案
 async function closeCase(req, res) {
     try {
         const { caseId } = req.params;
-        const { notes } = req.body;
+        const { notes, notifyUids } = req.body;
 
         const caseRef = db.collection('Cases').doc(caseId);
+        const doc = await caseRef.get();
+        if (!doc.exists) {
+            return res.status(404).json({ success: false, message: 'Case not found' });
+        }
+
+        const data = doc.data();
+
         await caseRef.update({
             status: 'closed',
             chaplain_notes: notes || '',
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
+        const { sendLinePush } = require('../services/dispatchService');
+
+        // 通報特定勾選的對象
+        if (Array.isArray(notifyUids) && notifyUids.length > 0) {
+            const message = `[結案通報] 案主 ${data.patient_name || '未命名'} (${data.qr_location || '未提供位置'}) 的關懷案件已結案。\n\n關懷師筆記：\n${notes || '無'}`;
+            for (let uid of notifyUids) {
+                if (uid) {
+                    sendLinePush(uid, message).catch(e => console.warn(`推播失敗給 ${uid}`, e));
+                }
+            }
+        }
+
+        // 自動通知該分院的 admin (最高管理員)
+        try {
+            const hospId = data.hosp_id;
+            // 撈取主角色為 admin 或 roles 包含該院區 admin 的用戶 (簡單處理主角色)
+            const usersSnap = await db.collection('Users').where('hosp_id', '==', hospId).where('role', '==', 'admin').get();
+            const adminMessage = `[主管通知] 分院 ${hospId} 有案件已結案。\n案主：${data.patient_name || '未命名'}\n關懷師筆記：\n${notes || '無'}`;
+            
+            usersSnap.forEach(adminDoc => {
+                const adminUid = adminDoc.id;
+                // 若已經在 notifyUids 中，就不重複發
+                if (!notifyUids || !notifyUids.includes(adminUid)) {
+                    sendLinePush(adminUid, adminMessage).catch(e => console.warn(e));
+                }
+            });
+        } catch (e) {
+            console.warn("Failed to notify admins", e);
+        }
+
         return res.status(200).json({ success: true, message: '結案並儲存回報成功！' });
     } catch (error) {
+        console.error("結案失敗:", error);
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
     }
 }
@@ -458,10 +515,54 @@ async function completePrayer(req, res) {
     }
 }
 
+// 取得大數據統計報表
+async function getStatistics(req, res) {
+    try {
+        const { hospId } = req.query;
+        if (!hospId) return res.status(400).json({ success: false, message: 'Missing hospId' });
+
+        // 取得該院區的所有 Cases
+        const snapshot = await db.collection('Cases').where('hosp_id', '==', hospId).get();
+        
+        let totalOpened = 0;
+        let totalClosed = 0;
+        let totalPending = 0;
+        let totalActive = 0;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            totalOpened++; // 每筆案件代表一次開案 (也包含狀態為 none 的剛建檔案件)
+            
+            if (data.status === 'closed') {
+                totalClosed++;
+            } else if (data.status === 'pending') {
+                totalPending++;
+            } else if (data.status === 'active') {
+                totalActive++;
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            hospId,
+            data: {
+                totalOpened,
+                totalClosed,
+                totalPending,
+                totalActive
+            }
+        });
+    } catch (e) {
+        console.error("取得報表失敗:", e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
 module.exports = {
     getCases,
     claimCase,
     closeCase,
+    updateCaseNote,
     deleteCase,
     requestContact,
     submitContact,
@@ -469,5 +570,6 @@ module.exports = {
     assignCaseManual,
     getCaseTrend,
     assignPastor,
-    completePrayer
+    completePrayer,
+    getStatistics
 };

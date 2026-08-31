@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { handleAudioUpload, getChatHistory } = require('./src/controllers/audioController');
-const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend, assignPastor, completePrayer } = require('./src/controllers/dashboardController');
+const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend, assignPastor, completePrayer, updateCaseNote, getStatistics } = require('./src/controllers/dashboardController');
 const { startDispatcher, runDispatchEngine } = require('./src/services/dispatchService');
 
 const app = express();
@@ -59,6 +59,7 @@ app.post('/api/analyze-audio', upload.single('audio'), handleAudioUpload);
 app.get('/api/dashboard/cases', getCases);
 app.post('/api/dashboard/cases/:caseId/claim', claimCase);
 app.post('/api/dashboard/cases/:caseId/close', closeCase);
+app.put('/api/dashboard/cases/:caseId/note', updateCaseNote);
 app.delete('/api/dashboard/cases/:caseId', deleteCase);
 app.post('/api/dashboard/cases/:caseId/request-contact', requestContact);
 app.post('/api/patient/cases/:caseId/contact', submitContact);
@@ -67,6 +68,7 @@ app.post('/api/dashboard/cases/:caseId/assign', assignCaseManual);
 app.post('/api/dashboard/cases/:caseId/assign-pastor', assignPastor);
 app.post('/api/dashboard/cases/:caseId/complete-prayer', completePrayer);
 app.get('/api/dashboard/cases/:caseId/trend', getCaseTrend);
+app.get('/api/dashboard/statistics', getStatistics);
 
 // 案主同意書 API
 const { checkConsent, submitConsent } = require('./src/controllers/patientController');
