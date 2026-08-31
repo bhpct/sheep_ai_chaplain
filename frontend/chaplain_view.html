@@ -361,7 +361,7 @@
         </div>
       </div>
       <div class="modal-body p-4 bg-light">
-        
+
         <!-- 基本資訊卡片 -->
         <div class="card mb-4 border-0 shadow-sm rounded-4">
             <div class="card-body p-4">
@@ -370,25 +370,35 @@
                         <small class="text-muted d-block mb-1"><i class="fa-brands fa-line text-success"></i> 案主姓名</small>
                         <strong class="fs-5" id="detail-name">-</strong>
                     </div>
-                    <div class="col-6 col-md-4 mb-2">
-                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 目前位置</small>
-                        <strong class="fs-5" id="detail-location">-</strong>
+                    <div class="col-12 col-md-8 mb-2">
+                        <small class="text-muted d-block mb-1"><i class="fa-solid fa-location-dot text-danger"></i> 位置資訊</small>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div>
+                                <span class="badge bg-light text-dark border mb-1"><i class="fa-solid fa-qrcode text-primary"></i> QR 掃描</span><br>
+                                <strong id="detail-qr-location" class="text-primary">-</strong>
+                            </div>
+                            <div class="border-start ps-3">
+                                <span class="badge bg-light text-dark border mb-1"><i class="fa-solid fa-comment-dots text-success"></i> 自述</span><br>
+                                <strong id="detail-location" class="text-success">-</strong>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-6 col-md-4 mb-2">
                         <small class="text-muted d-block mb-1"><i class="fa-solid fa-phone text-info"></i> 聯絡電話</small>
                         <span id="detail-phone" class="fs-5 fw-bold">-</span>
                     </div>
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-4">
                         <small class="text-muted d-block mb-1"><i class="fa-solid fa-heart-pulse text-primary"></i> 風險評估</small>
                         <span id="detail-risk-badge"></span>
                     </div>
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-4">
                         <small class="text-muted d-block mb-1"><i class="fa-regular fa-clock text-warning"></i> 建立時間</small>
                         <strong id="detail-time">-</strong>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <!-- AI 摘要卡片 -->
         <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
@@ -491,6 +501,143 @@
   </div>
 </div>
 
+<!-- QR Code Modal （三 Tab 設計） -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0" style="border-radius: 20px;">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold" id="qr-modal-title">頻道 QR Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs px-4 pt-3" id="qrTabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" onclick="switchQrTab('hosp', this)">
+                    <i class="fa-solid fa-hospital"></i> 院區 QR
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="switchQrTab('ward', this)">
+                    <i class="fa-solid fa-door-open"></i> 病房/護理站 QR
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="switchQrTab('batch', this)">
+                    <i class="fa-solid fa-layer-group"></i> 批次病室 QR
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab 1: 院區層 -->
+        <div id="qrTab-hosp" class="p-4 text-center">
+            <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-3">
+                <img src="" id="qr-modal-image" class="img-fluid" style="max-width: 220px;">
+                <canvas id="qrcode-canvas" style="display:none;"></canvas>
+            </div>
+            <p class="text-muted small" id="qr-hosp-name">院區名稱</p>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control text-center" id="qr-url" readonly>
+                <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <button class="btn btn-outline-success w-100 rounded-pill fw-bold" onclick="printQRCode()">
+                <i class="fa-solid fa-print"></i> 列印 A4 邂請卡
+            </button>
+        </div>
+
+        <!-- Tab 2: 病房/護理站層 -->
+        <div id="qrTab-ward" class="p-4" style="display:none;">
+            <div class="mb-3">
+                <label class="form-label fw-bold"><i class="fa-solid fa-door-open text-primary"></i> 病房或護理站名稱</label>
+                <input type="text" class="form-control rounded-pill" id="ward-name-input" placeholder="例如：3F 外科病房">
+            </div>
+            <button class="btn btn-primary rounded-pill w-100 mb-4" onclick="generateWardQr()">
+                <i class="fa-solid fa-qrcode"></i> 產生 QR Code
+            </button>
+            <div id="ward-qr-result" class="text-center" style="display:none;">
+                <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-3">
+                    <img src="" id="ward-qr-image" style="max-width: 200px;">
+                    <canvas id="ward-qrcode-canvas" style="display:none;"></canvas>
+                </div>
+                <p class="text-muted small" id="ward-qr-desc"></p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control text-center" id="ward-qr-url" readonly>
+                    <button class="btn btn-outline-primary" onclick="copyWardQrUrl()">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+                <button class="btn btn-outline-success w-100 rounded-pill fw-bold" onclick="printWardQRCode()">
+                    <i class="fa-solid fa-print"></i> 列印 A4 邂請卡
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 3: 批次病室層 -->
+        <div id="qrTab-batch" class="p-4" style="display:none;">
+            <div class="mb-3">
+                <label class="form-label fw-bold"><i class="fa-solid fa-door-open text-primary"></i> 所屬病房名稱</label>
+                <input type="text" class="form-control rounded-pill" id="batch-ward-name" placeholder="例如：3F 外科">
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold">起始房號</label>
+                    <input type="number" class="form-control rounded-pill" id="batch-room-from" placeholder="例如：301" min="1">
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold">結束房號</label>
+                    <input type="number" class="form-control rounded-pill" id="batch-room-to" placeholder="例如：310" min="1">
+                </div>
+            </div>
+            <button class="btn btn-primary rounded-pill w-100" onclick="generateBatchRoomQr()">
+                <i class="fa-solid fa-layer-group"></i> 一鍵產生並開啟列印頁
+            </button>
+            <p class="text-muted small mt-2 text-center">
+                <i class="fa-solid fa-circle-info"></i> 將開新視窗，顯示所有房號的 QR Code 列印頁面
+            </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增角色 Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius: 16px;">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus text-primary"></i> 新增額外角色</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="add-role-target-uid">
+        <p class="text-muted mb-3">為 <strong id="add-role-target-name"></strong> 新增一個額外的院區與角色：</p>
+        <div class="mb-3">
+            <label class="form-label fw-bold">所屬院區</label>
+            <select class="form-select rounded-pill" id="add-role-hosp">
+                <option value="">請選擇...</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">角色</label>
+            <select class="form-select rounded-pill" id="add-role-type">
+                <option value="chaplain">關懷師</option>
+                <option value="pastor">牧師</option>
+                <option value="nurse">護理師</option>
+                <option value="social_worker">社工師</option>
+                <option value="admin">最高管理員</option>
+            </select>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">取消</button>
+        <button class="btn btn-primary rounded-pill fw-bold" onclick="submitAddRole()">
+            <i class="fa-solid fa-check"></i> 確認新增
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 列印專用區塊 -->
 <div id="print-area" class="d-none" style="text-align: center; font-family: '微軟正黑體', sans-serif; padding: 50px;">
     <h1 style="font-size: 3.5rem; font-weight: bold; color: #4a4a4a; margin-bottom: 20px;">需要找人陪伴聊天嗎？</h1>
@@ -501,30 +648,7 @@
     <img src="" id="print-qr-image" style="width: 350px; height: 350px; border: 2px solid #ddd; padding: 15px; border-radius: 15px;">
 </div>
 
-<!-- QR Code Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content text-center border-0" style="border-radius: 20px;">
-      <div class="modal-header bg-light border-0">
-        <h5 class="modal-title fw-bold" id="qr-modal-title">頻道 QR Code</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-5 bg-white">
-        <h4 class="mb-4 fw-bold text-dark" id="qr-hosp-name">醫院名稱</h4>
-        <div class="p-3 bg-white d-inline-block rounded shadow-sm border mb-4">
-            <img src="" id="qr-modal-image" class="img-fluid mb-3" style="max-width: 250px;">
-            <canvas id="qrcode-canvas" style="display:none;"></canvas>
-        </div>
-        <p class="text-muted small">請病患/家屬掃描此 QR Code 進入該院專屬關懷頻道</p>
-        <div class="input-group">
-            <input type="text" class="form-control text-center" id="qr-url" readonly>
-            <button class="btn btn-outline-primary" onclick="copyQrUrl()"><i class="fa-solid fa-copy"></i></button>
-        </div>
-        <button class="btn btn-outline-success mt-3 w-100 rounded-pill fw-bold" onclick="printQRCode()"><i class="fa-solid fa-print"></i> 列印 A4 邀請卡</button>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 <!-- 波動圖 Modal -->
 <div class="modal fade" id="trendModal" tabindex="-1">
@@ -547,6 +671,6 @@
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <!-- QRious for QR Code -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<script src="common/dashboard.js?v=18"></script>
+<script src="common/dashboard.js?v=19"></script>
 </body>
 </html>

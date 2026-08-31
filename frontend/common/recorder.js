@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const hospId = urlParams.get('hosp') || 'CCH';
-    
+    const ward = urlParams.get('ward') || null;   // 病房/護理站名稱
+    const room = urlParams.get('room') || null;   // 病室號
+
     // 動態取得醫院真實名稱
     fetch(`/api/dashboard/hospitals?hospId=${hospId}`)
         .then(res => res.json())
@@ -188,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('lineUid', lineUid); // 綁定 UID
         formData.append('displayName', userDisplayName);
         formData.append('history', JSON.stringify(conversationHistory));
+        // 附加 QR Code 掃描位置資訊
+        if (ward) formData.append('ward', ward);
+        if (room) formData.append('room', room);
 
         const langToggle = document.getElementById('langToggle');
         if (langToggle) {

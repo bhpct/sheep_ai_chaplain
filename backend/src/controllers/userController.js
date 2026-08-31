@@ -63,11 +63,22 @@ async function saveUser(req, res) {
         }
 
         const userRef = db.collection('Users').doc(lineUid);
+        const existingDoc = await userRef.get();
+
+        // 建立或更新主要角色，並同步維護 roles 陣列
+        let currentRoles = existingDoc.exists ? (existingDoc.data().roles || []) : [];
+        // 確保主要角色的 {role, hosp_id} 組合已存在於 roles 陣列
+        const primaryExists = currentRoles.some(r => r.role === role && r.hosp_id === hospId);
+        if (!primaryExists) {
+            currentRoles.unshift({ role, hosp_id: hospId }); // 主要角色放第一位
+        }
+
         await userRef.set({
             line_uid: lineUid,
             displayName: displayName || '未命名',
             role: role,
             hosp_id: hospId,
+            roles: currentRoles,
             created_at: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
@@ -139,4 +150,76 @@ async function applyUser(req, res) {
     }
 }
 
-module.exports = { getUsers, saveUser, deleteUser, applyUser };
+// 新增額外角色 API
+async function addUserRole(req, res) {
+    try {
+        const { uid } = req.params;
+        const { adminUid, role, hospId } = req.body;
+
+        const caller = await verifyRole(adminUid);
+        if (caller.role !== 'super_admin' && caller.role !== 'admin') {
+            return res.status(403).json({ success: false, message: '權限不足' });
+        }
+        if (!role || !hospId) {
+            return res.status(400).json({ success: false, message: '請提供角色與院區' });
+        }
+
+        const userRef = db.collection('Users').doc(uid);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, message: '找不到該使用者' });
+        }
+
+        const userData = userDoc.data();
+        const currentRoles = userData.roles || [{ role: userData.role, hosp_id: userData.hosp_id }];
+
+        // 去重檢查
+        const isDuplicate = currentRoles.some(r => r.role === role && r.hosp_id === hospId);
+        if (isDuplicate) {
+            return res.status(400).json({ success: false, message: '該角色與院區組合已存在' });
+        }
+
+        currentRoles.push({ role, hosp_id: hospId });
+        await userRef.update({ roles: currentRoles });
+
+        return res.status(200).json({ success: true, message: '已新增角色！' });
+    } catch (e) {
+        console.error('新增角色失敗:', e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
+// 移除額外角色 API
+async function removeUserRole(req, res) {
+    try {
+        const { uid } = req.params;
+        const { adminUid, role, hospId } = req.body;
+
+        const caller = await verifyRole(adminUid);
+        if (caller.role !== 'super_admin' && caller.role !== 'admin') {
+            return res.status(403).json({ success: false, message: '權限不足' });
+        }
+
+        const userRef = db.collection('Users').doc(uid);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, message: '找不到該使用者' });
+        }
+
+        const userData = userDoc.data();
+        // 不允許移除主要角色（需透過「修改人員」功能更換）
+        if (role === userData.role && hospId === userData.hosp_id) {
+            return res.status(400).json({ success: false, message: '無法移除主要角色，請使用「修改人員」功能替換' });
+        }
+
+        const newRoles = (userData.roles || []).filter(r => !(r.role === role && r.hosp_id === hospId));
+        await userRef.update({ roles: newRoles });
+
+        return res.status(200).json({ success: true, message: '已移除該角色！' });
+    } catch (e) {
+        console.error('移除角色失敗:', e);
+        return res.status(500).json({ success: false, message: e.message });
+    }
+}
+
+module.exports = { getUsers, saveUser, deleteUser, applyUser, addUserRole, removeUserRole };

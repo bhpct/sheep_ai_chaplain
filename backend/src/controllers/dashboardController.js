@@ -260,17 +260,47 @@ async function getChaplains(req, res) {
         const { hospId } = req.query;
         if (!hospId) return res.status(400).json({ success: false, message: 'Missing hospId' });
 
-        const snapshot = await db.collection('Users').where('hosp_id', '==', hospId).get();
+        // 取得全部人員，同時檢查主要 hosp_id 與 roles 陣列
+        const allUsersSnap = await db.collection('Users').get();
         let chaplains = [];
-        snapshot.forEach(doc => {
-            chaplains.push({ uid: doc.id, name: doc.data().displayName || doc.data().name || '未知關懷師', role: doc.data().role });
-        });
+        const seen = new Set();
 
-        // 加入超級管理員或總院管理員 (如果有跨院支援需求)
-        const adminSnap = await db.collection('Users').where('role', 'in', ['super_admin', 'admin']).get();
-        adminSnap.forEach(doc => {
-            if (!chaplains.find(c => c.uid === doc.id)) {
-                chaplains.push({ uid: doc.id, name: `${doc.data().displayName || doc.data().name || '未知'} (管理員)`, role: doc.data().role });
+        allUsersSnap.forEach(doc => {
+            const data = doc.data();
+            const uid = doc.id;
+
+            // 蒐集此人在指定醫院中的所有角色
+            let rolesForHosp = [];
+
+            // 1. 主要角色
+            if (data.hosp_id === hospId && data.role && data.role !== 'pending') {
+                rolesForHosp.push(data.role);
+            }
+
+            // 2. roles 陣列中的額外角色
+            if (Array.isArray(data.roles)) {
+                data.roles.forEach(r => {
+                    if (r.hosp_id === hospId && r.role && r.role !== 'pending' && !rolesForHosp.includes(r.role)) {
+                        rolesForHosp.push(r.role);
+                    }
+                });
+            }
+
+            // 3. super_admin / admin 全院可見
+            if (['super_admin', 'admin'].includes(data.role)) {
+                if (!rolesForHosp.includes(data.role)) {
+                    rolesForHosp.push(data.role);
+                }
+            }
+
+            if (rolesForHosp.length > 0 && !seen.has(uid)) {
+                seen.add(uid);
+                chaplains.push({
+                    uid,
+                    name: data.displayName || data.name || '未知關懷師',
+                    role: data.role,
+                    roles: rolesForHosp
+                });
             }
         });
 

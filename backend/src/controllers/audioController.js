@@ -90,6 +90,9 @@ async function handleAudioUpload(req, res) {
         const lineUid = req.body.lineUid || 'anonymous_uid'; 
         const displayName = req.body.displayName || '未知使用者';
         const selectedLang = req.body.selectedLang || 'zh';
+        const ward = req.body.ward || null;   // 病房/護理站（由 QR Code URL 參數傳入）
+        const room = req.body.room || null;   // 病室號（由 QR Code URL 參數傳入）
+        const qrLocation = (ward || room) ? { ward: ward || null, room: room || null } : null;
         
         let history = [];
         if (req.body.history) {
@@ -201,6 +204,7 @@ async function handleAudioUpload(req, res) {
                 current_risk_level: analysisResult.risk_level,
                 is_opened: isOpened,
                 location: analysisResult.location || null,
+                qr_location: qrLocation,   // QR Code 扫描位置（固定從首次交話建立）
                 ai_summary: analysisResult.ai_summary || '',
                 ai_needs: analysisResult.ai_needs || '',
                 ai_assessment: analysisResult.ai_assessment || {},
@@ -255,6 +259,7 @@ async function handleAudioUpload(req, res) {
                 needs_prayer: currentData.needs_prayer || analysisResult.needs_prayer || false,
                 selected_lang: selectedLang,
                 location: analysisResult.location || currentData.location,
+                qr_location: qrLocation || currentData.qr_location || null, // 最新 QR 扫描位置更新（若本次沒有扫描則保留舊值）
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 latest_transcript: logData.transcript,
                 latest_transcript_zh: logData.transcript_zh,

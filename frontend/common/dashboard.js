@@ -329,7 +329,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSelectedCase = caseData;
         
         document.getElementById('detail-name').innerHTML = `${caseData.patient_name || '未知案主'} <span class="badge bg-secondary ms-2 align-middle" style="font-size: 0.75rem;"><i class="fa-solid fa-hospital"></i> ${caseData.hosp_id}</span>`;
-        document.getElementById('detail-location').innerText = caseData.location || '未知';
+        // AI 對話著取的自述位置
+        document.getElementById('detail-location').innerText = caseData.location || '\u672a知';
+        // QR Code 扫描位置
+        const qrLoc = caseData.qr_location;
+        if (qrLoc && (qrLoc.ward || qrLoc.room)) {
+            const parts = [qrLoc.ward, qrLoc.room ? `${qrLoc.room}室` : null].filter(Boolean);
+            document.getElementById('detail-qr-location').innerText = parts.join(' / ');
+        } else {
+            document.getElementById('detail-qr-location').innerText = '未掃描';
+        }
         const langMap = { 'zh': '繁體中文', 'en': 'English', 'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย', 'id': 'Bahasa Indonesia', 'vi': 'Tiếng Việt', 'tl': 'Tagalog' };
         const displayLang = caseData.selected_lang ? (langMap[caseData.selected_lang] || caseData.selected_lang) : '';
         document.getElementById('detail-risk-badge').innerHTML = `
@@ -950,14 +959,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         users.forEach(u => {
             const tr = document.createElement('tr');
-            let roleBadge = '';
-            if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">超級管理員</span>';
-            else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">最高管理員</span>';
-            else if (u.role === 'pastor') roleBadge = '<span class="badge bg-info text-dark">牧師</span>';
-            else if (u.role === 'nurse') roleBadge = '<span class="badge bg-secondary">護理師</span>';
-            else if (u.role === 'social_worker') roleBadge = '<span class="badge" style="background-color: #d63384;">社工師</span>';
-            else if (u.role === 'pending') roleBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> 待審核</span>';
-            else roleBadge = '<span class="badge bg-success">關懷師</span>';
+
+            // 建立所有角色的 badges
+            const allRoles = u.roles && u.roles.length > 0 ? u.roles : [{ role: u.role, hosp_id: u.hosp_id }];
+            const roleBadgesHtml = allRoles.map(r => {
+                let color = 'success', label = '關怀師';
+                if (r.role === 'super_admin') { color = 'danger'; label = '超級管理員'; }
+                else if (r.role === 'admin') { color = 'primary'; label = '最高管理員'; }
+                else if (r.role === 'pastor') { color = 'info'; label = '牧師'; }
+                else if (r.role === 'nurse') { color = 'secondary'; label = '護理師'; }
+                else if (r.role === 'social_worker') return `<span class="badge me-1 mb-1" style="background-color:#d63384;">${label} <small class="opacity-75">${r.hosp_id || ''}</small></span>`;
+                else if (r.role === 'pending') { color = 'warning'; label = '待審核'; }
+                return `<span class="badge bg-${color} me-1 mb-1">${label} <small class="opacity-75">${r.hosp_id || ''}</small></span>`;
+            }).join('');
 
             let actionBtns = '';
             if (u.role === 'pending') {
@@ -967,6 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else {
                 actionBtns = `
+                    <button class="btn btn-sm btn-outline-success rounded-pill me-1" onclick="openAddRoleModal('${u.uid}', '${u.displayName || u.name || ''}')"><i class="fa-solid fa-user-plus"></i> 新增角色</button>
                     <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.displayName || u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
                     <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
                 `;
@@ -974,8 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tr.innerHTML = `
                 <td class="fw-bold"><i class="fa-solid fa-user-circle text-muted me-2"></i>${u.displayName || u.name || '未知名稱'}</td>
-                <td>${roleBadge}</td>
-                <td><span class="badge bg-secondary"><i class="fa-solid fa-hospital"></i> ${u.hosp_id || '未綁定'}</span></td>
+                <td>${roleBadgesHtml}</td>
                 <td><code>${u.uid}</code></td>
                 <td class="text-end">${actionBtns}</td>
             `;
@@ -1266,25 +1280,142 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 顯示 QR Code
+    // 顯示 QR Code（新版：三 Tab 架構）
+    let _currentQrBaseUrl = ''; // 記漢目前院區的基礎 URL
+    let _currentHospName = '';
+
     window.showQrCode = function(hospId, hospName, url) {
-        document.getElementById('qr-modal-title').innerText = `${hospName} 專屬連結`;
+        _currentQrBaseUrl = url;
+        _currentHospName = hospName;
+
+        document.getElementById('qr-modal-title').innerText = `${hospName} 的 QR Code`;
+        document.getElementById('qr-hosp-name').innerText = `院區：${hospName}`;
         document.getElementById('qr-url').value = url;
-        
+
         const canvas = document.getElementById('qrcode-canvas');
-        const qr = new QRious({
-            element: canvas,
-            value: url,
-            size: 350,
-            level: 'H'
-        });
+        const qr = new QRious({ element: canvas, value: url, size: 350, level: 'H' });
         const dataUrl = canvas.toDataURL();
         document.getElementById('qr-modal-image').src = dataUrl;
         document.getElementById('print-qr-image').src = dataUrl;
         document.getElementById('print-hosp-name').innerText = hospName;
 
+        // 重置回院區 Tab
+        switchQrTab('hosp', document.querySelector('#qrTabs .nav-link'));
+
         const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
         qrModal.show();
+    }
+
+    // Tab 切換
+    window.switchQrTab = function(tab, linkEl) {
+        ['hosp', 'ward', 'batch'].forEach(t => {
+            document.getElementById(`qrTab-${t}`).style.display = (t === tab) ? 'block' : 'none';
+        });
+        document.querySelectorAll('#qrTabs .nav-link').forEach(l => l.classList.remove('active'));
+        if (linkEl) linkEl.classList.add('active');
+    }
+
+    // 病房 QR Code 產生
+    window.generateWardQr = function() {
+        const ward = document.getElementById('ward-name-input').value.trim();
+        if (!ward) return Swal.fire('請輸入病房名稱', '', 'warning');
+
+        const wardUrl = `${_currentQrBaseUrl}&ward=${encodeURIComponent(ward)}`;
+        document.getElementById('ward-qr-url').value = wardUrl;
+        document.getElementById('ward-qr-desc').innerText = `${_currentHospName} / ${ward}`;
+
+        const canvas = document.getElementById('ward-qrcode-canvas');
+        const qr = new QRious({ element: canvas, value: wardUrl, size: 300, level: 'H' });
+        document.getElementById('ward-qr-image').src = canvas.toDataURL();
+        document.getElementById('ward-qr-result').style.display = 'block';
+    }
+
+    window.copyWardQrUrl = function() {
+        const input = document.getElementById('ward-qr-url');
+        input.select();
+        navigator.clipboard.writeText(input.value);
+        Swal.fire('已複製', '病房連結已複製！', 'success');
+    }
+
+    window.printWardQRCode = function() {
+        const url = document.getElementById('ward-qr-url').value;
+        const ward = document.getElementById('ward-name-input').value.trim();
+        const imgSrc = document.getElementById('ward-qr-image').src;
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>列印 - ${_currentHospName} ${ward}</title>
+            <style>body{font-family:"微軟正黑體",sans-serif;text-align:center;padding:50px;}
+            h1{font-size:3rem;margin-bottom:10px;}h2{font-size:2rem;color:#555;}
+            img{width:350px;height:350px;border:2px solid #ddd;padding:15px;border-radius:15px;margin:30px 0;}
+            p{font-size:1.5rem;color:#444;}
+            @media print{button{display:none;}}
+            </style></head><body>
+            <h1>需要找人陪伴聊天嗎？</h1>
+            <h2>和和羊聽你說心事</h2>
+            <img src="${imgSrc}">
+            <p>請用手機揃描上方 QR Code<br>進入 <strong>${_currentHospName} ${ward}</strong> 專屬關懷頻道</p>
+            <button onclick="window.print()">&#128424; 列印</button>
+            </body></html>
+        `);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+
+    // 批次病室 QR Code 產生
+    window.generateBatchRoomQr = function() {
+        const ward = document.getElementById('batch-ward-name').value.trim();
+        const from = parseInt(document.getElementById('batch-room-from').value);
+        const to = parseInt(document.getElementById('batch-room-to').value);
+
+        if (!ward || isNaN(from) || isNaN(to)) return Swal.fire('請填寫完整資訊', '', 'warning');
+        if (to < from) return Swal.fire('結束房號不能小於起始房號', '', 'warning');
+        if (to - from > 100) return Swal.fire('一次最多產生 100 間房間', '', 'warning');
+
+        const rooms = [];
+        for (let r = from; r <= to; r++) rooms.push(r);
+
+        // 用 canvas 領取所有 QR Code data URL
+        const tempCanvas = document.createElement('canvas');
+        const qrDataUrls = rooms.map(room => {
+            const roomUrl = `${_currentQrBaseUrl}&ward=${encodeURIComponent(ward)}&room=${room}`;
+            const qr = new QRious({ element: tempCanvas, value: roomUrl, size: 280, level: 'H' });
+            return { room, url: roomUrl, dataUrl: tempCanvas.toDataURL() };
+        });
+
+        // 開新視窗顯示列印頁
+        const win = window.open('', '_blank');
+        const cardsHtml = qrDataUrls.map(({ room, dataUrl }) => `
+            <div class="qr-card">
+                <div class="hosp-name">${_currentHospName}</div>
+                <div class="ward-name">${ward}</div>
+                <img src="${dataUrl}">
+                <div class="room-number">${room} 室</div>
+                <div class="scan-hint">掃描進入專屬關懷頻道</div>
+            </div>
+        `).join('');
+
+        win.document.write(`
+            <html><head><title>批次列印 - ${_currentHospName} ${ward}</title>
+            <style>
+            body{font-family:"微軟正黑體",sans-serif;padding:10px;background:#f5f5f5;}
+            h1{text-align:center;margin-bottom:20px;}
+            .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+            .qr-card{background:white;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+            .qr-card img{width:200px;height:200px;margin:10px 0;}
+            .hosp-name{font-size:1rem;color:#555;margin-bottom:4px;}
+            .ward-name{font-size:1.3rem;font-weight:bold;color:#333;margin-bottom:4px;}
+            .room-number{font-size:2rem;font-weight:bold;color:#0d6efd;margin-top:4px;}
+            .scan-hint{font-size:0.85rem;color:#888;margin-top:6px;}
+            .controls{text-align:center;margin-bottom:20px;}
+            @media print{.controls{display:none;}.grid{gap:8px;}}
+            </style></head><body>
+            <div class="controls">
+                <button onclick="window.print()" style="padding:10px 30px;font-size:1.1rem;background:#0d6efd;color:white;border:none;border-radius:8px;cursor:pointer;">&#128424; 列印所有 QR Code</button>
+            </div>
+            <div class="grid">${cardsHtml}</div>
+            </body></html>
+        `);
+        win.document.close();
     }
 
     // 複製連結
@@ -1294,6 +1425,55 @@ document.addEventListener('DOMContentLoaded', () => {
         copyText.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(copyText.value);
         Swal.fire('已複製', '網址已複製！', 'success');
+    }
+
+    // 開啟新增角色 Modal
+    window.openAddRoleModal = function(uid, name) {
+        document.getElementById('add-role-target-uid').value = uid;
+        document.getElementById('add-role-target-name').innerText = name;
+
+        // 載入院區選單
+        fetch(`/api/dashboard/hospitals?adminUid=${chaplainUid}`)
+            .then(res => res.json())
+            .then(data => {
+                const sel = document.getElementById('add-role-hosp');
+                sel.innerHTML = '<option value="">請選擇...</option>';
+                if (data.success) {
+                    data.hospitals.forEach(h => {
+                        sel.innerHTML += `<option value="${h.id}">${h.hosp_name} (${h.id})</option>`;
+                    });
+                }
+            });
+
+        const modal = new bootstrap.Modal(document.getElementById('addRoleModal'));
+        modal.show();
+    }
+
+    // 確認新增角色
+    window.submitAddRole = async function() {
+        const uid = document.getElementById('add-role-target-uid').value;
+        const role = document.getElementById('add-role-type').value;
+        const hospId = document.getElementById('add-role-hosp').value;
+
+        if (!hospId) return Swal.fire('請選擇院區', '', 'warning');
+
+        try {
+            const res = await fetch(`/api/dashboard/users/${uid}/add-role`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, role, hospId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addRoleModal')).hide();
+                Swal.fire('已新增角色', `${role} @ ${hospId}`, 'success');
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '新增失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
     }
 
     // 啟動
