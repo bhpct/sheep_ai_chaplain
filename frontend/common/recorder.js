@@ -186,7 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (statusPollingInterval) clearInterval(statusPollingInterval);
                 statusPollingInterval = setInterval(async () => {
                     try {
-                        const res = await fetch(`/api/patient/status?uid=${lineUid}`);
+                        const res = await fetch(`/api/patient/status?uid=${lineUid}&_t=${new Date().getTime()}`, {
+                            cache: 'no-store'
+                        });
                         const data = await res.json();
                         if (data.success && data.force_contact_prompt && !isPromptingContact && data.case_id) {
                             window.triggerContactPrompt(data.case_id);
