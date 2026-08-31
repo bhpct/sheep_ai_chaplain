@@ -265,6 +265,8 @@ async function requestContact(req, res) {
         const { sendContactCardPush } = require('../services/dispatchService');
         
         try {
+            const patientUid = doc.data().line_uid;
+            const liffUrl = `https://liff.line.me/${process.env.LIFF_ID}?action=my_cases`;
             await sendContactCardPush(patientUid, liffUrl);
             return res.status(200).json({ success: true, message: '已發送關懷小卡給案主！' });
         } catch (pushErr) {
@@ -337,13 +339,21 @@ async function getPatientStatus(req, res) {
         
         const cases = [];
         snapshot.forEach(doc => cases.push({ id: doc.id, ...doc.data() }));
-        cases.sort((a, b) => (b.updated_at ? b.updated_at.toMillis() : 0) - (a.updated_at ? a.updated_at.toMillis() : 0));
+        
+        cases.sort((a, b) => {
+            const timeA = a.updated_at && a.updated_at.toDate ? a.updated_at.toDate().getTime() : 0;
+            const timeB = b.updated_at && b.updated_at.toDate ? b.updated_at.toDate().getTime() : 0;
+            return timeB - timeA;
+        });
         
         const latestCase = cases[0];
+        const shouldPrompt = !!latestCase.contact_requested || !!latestCase.force_contact_prompt;
+        
+        console.log(`Polling status for ${uid}: latestCase=${latestCase.id}, shouldPrompt=${shouldPrompt}`);
         
         return res.status(200).json({ 
             success: true, 
-            force_contact_prompt: !!latestCase.contact_requested || !!latestCase.force_contact_prompt,
+            force_contact_prompt: shouldPrompt,
             case_id: latestCase.id
         });
     } catch (error) {
