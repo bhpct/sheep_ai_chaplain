@@ -274,6 +274,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    window.leaveContactInfo = function() {
+        if (!currentCaseId) {
+            Swal.fire({
+                title: '請先說說話',
+                text: '請先按住麥克風對咩咪羊說出您的狀況或困擾，系統建立記錄後，您就能留下聯絡方式囉！',
+                icon: 'info',
+                confirmButtonText: '好，我先錄音'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: '聯絡關懷師',
+            text: '如果您即將離開畫面，請留下您的電話號碼或 LINE ID，關懷師稍後會主動與您聯繫：',
+            input: 'text',
+            inputPlaceholder: '例如：0912345678 或 LINE ID: my_id123',
+            showCancelButton: true,
+            confirmButtonText: '送出',
+            cancelButtonText: '取消',
+            inputValidator: (value) => {
+                if (!value) return '請輸入聯絡方式！';
+            }
+        }).then((res) => {
+            if (res.isConfirmed && res.value) {
+                fetch(`/api/patient/cases/${currentCaseId}/contact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: res.value })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        Swal.fire('成功', '已將您的聯絡方式轉交給關懷師！', 'success');
+                        chatBubble.innerHTML = `(已送出聯絡方式：${res.value})<br>關懷師已收到您的資訊，稍後會主動與您聯繫，請安心喔！`;
+                    } else {
+                        Swal.fire('錯誤', d.message, 'error');
+                    }
+                })
+                .catch(() => Swal.fire('錯誤', '網路異常', 'error'));
+            }
+        });
+    };
+
     async function initAudio() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
