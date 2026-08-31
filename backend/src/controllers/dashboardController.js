@@ -346,14 +346,21 @@ async function getPatientStatus(req, res) {
             return timeB - timeA;
         });
         
+        const caseToPrompt = cases.find(c => c.contact_requested || c.force_contact_prompt);
         const latestCase = cases[0];
-        const shouldPrompt = !!latestCase.contact_requested || !!latestCase.force_contact_prompt;
         
-        console.log(`Polling status for ${uid}: latestCase=${latestCase.id}, shouldPrompt=${shouldPrompt}`);
+        if (caseToPrompt) {
+            console.log(`Polling status for ${uid}: Found case needing prompt: ${caseToPrompt.id}`);
+            return res.status(200).json({ 
+                success: true, 
+                force_contact_prompt: true,
+                case_id: caseToPrompt.id
+            });
+        }
         
         return res.status(200).json({ 
             success: true, 
-            force_contact_prompt: shouldPrompt,
+            force_contact_prompt: false,
             case_id: latestCase.id
         });
     } catch (error) {
