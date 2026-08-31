@@ -80,9 +80,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) {
+                    localStorage.setItem('liff_redirect', window.location.href);
                     liff.login();
                     return;
                 }
+                
+                const redirectUrl = localStorage.getItem('liff_redirect');
+                if (redirectUrl) {
+                    localStorage.removeItem('liff_redirect');
+                    if (redirectUrl !== window.location.href) {
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+                }
+
                 const profile = await liff.getProfile();
                 lineUid = profile.userId;
                 userDisplayName = profile.displayName;
@@ -306,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('text', `使用者剛才點擊了心情星星評分：${score} 顆星。請以此分數接續關心。`);
             
             sendToBackend(formData);
+        });
     });
 
     async function initAudio() {

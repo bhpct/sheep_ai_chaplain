@@ -25,9 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 await liff.init({ liffId: config.liffId });
                 if (!liff.isLoggedIn()) {
+                    localStorage.setItem('liff_redirect', window.location.href);
                     liff.login();
                     return;
                 }
+                
+                const redirectUrl = localStorage.getItem('liff_redirect');
+                if (redirectUrl) {
+                    localStorage.removeItem('liff_redirect');
+                    if (redirectUrl !== window.location.href) {
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+                }
+
                 const profile = await liff.getProfile();
                 chaplainUid = profile.userId;
             }
