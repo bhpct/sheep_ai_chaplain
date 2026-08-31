@@ -180,6 +180,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             await loadChatHistory();
+            
+            // Start polling for force_contact_prompt using lineUid
+            if (lineUid) {
+                if (statusPollingInterval) clearInterval(statusPollingInterval);
+                statusPollingInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch(`/api/patient/status?uid=${lineUid}`);
+                        const data = await res.json();
+                        if (data.success && data.force_contact_prompt && !isPromptingContact && data.case_id) {
+                            window.triggerContactPrompt(data.case_id);
+                        }
+                    } catch(e) {
+                        console.error("Polling error", e);
+                    }
+                }, 10000);
+            }
         } catch (err) {
             console.error("LIFF 初始化失敗:", err);
             chatBubble.innerHTML = "系統連線異常，請稍後再試。";

@@ -320,6 +320,34 @@ async function getCaseStatus(req, res) {
     }
 }
 // 取得特定醫院的關懷師列表
+async function getPatientStatus(req, res) {
+    try {
+        const { uid } = req.query;
+        if (!uid) return res.status(400).json({ success: false, message: 'Missing uid' });
+        
+        const snapshot = await db.collection('Cases')
+            .where('line_uid', '==', uid)
+            .orderBy('updated_at', 'desc')
+            .limit(1)
+            .get();
+            
+        if (snapshot.empty) {
+            return res.status(200).json({ success: true, force_contact_prompt: false, case_id: null });
+        }
+        
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return res.status(200).json({ 
+            success: true, 
+            force_contact_prompt: !!data.force_contact_prompt,
+            case_id: doc.id
+        });
+    } catch (error) {
+        console.error("查詢案件狀態失敗", error);
+        return res.status(500).json({ success: false, message: '伺服器發生錯誤' });
+    }
+}
+
 async function getChaplains(req, res) {
     try {
         const { hospId } = req.query;
@@ -573,7 +601,7 @@ module.exports = {
     updateCaseNote,
     deleteCase,
     requestContact,
-    submitContact, getCaseStatus,
+    submitContact, getCaseStatus, getPatientStatus,
     getChaplains,
     assignCaseManual,
     getCaseTrend,
