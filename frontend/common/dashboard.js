@@ -948,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/api/dashboard/chaplains?hospId=${hospId}`);
             const data = await res.json();
             if (data.success) {
-                const pastors = data.chaplains.filter(c => c.role === 'pastor');
+                const pastors = data.chaplains.filter(c => c.roles && c.roles.includes('pastor'));
                 if (pastors.length === 0) {
                     Swal.fire('提示', '該院區目前沒有建立牧師名單，無法指派。', 'warning');
                     return;
