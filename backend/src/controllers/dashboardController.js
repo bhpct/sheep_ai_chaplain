@@ -291,6 +291,7 @@ async function submitContact(req, res) {
 
         await db.collection('Cases').doc(caseId).update({
             contact_phone: phone,
+            contact_requested: false,
             force_contact_prompt: false,
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
@@ -298,7 +299,7 @@ async function submitContact(req, res) {
         return res.status(200).json({ success: true, message: '電話更新成功' });
     } catch (error) {
         console.error("更新電話失敗:", error);
-        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+        return res.status(500).json({ success: false, message: '伺服器發生錯誤' });
     }
 }
 
@@ -312,13 +313,14 @@ async function getCaseStatus(req, res) {
         const data = doc.data();
         return res.status(200).json({ 
             success: true, 
-            force_contact_prompt: !!data.force_contact_prompt 
+            force_contact_prompt: !!data.contact_requested || !!data.force_contact_prompt 
         });
     } catch (error) {
         console.error("取得案件狀態失敗:", error);
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
     }
 }
+
 // 取得特定醫院的關懷師列表
 async function getPatientStatus(req, res) {
     try {
@@ -341,7 +343,7 @@ async function getPatientStatus(req, res) {
         
         return res.status(200).json({ 
             success: true, 
-            force_contact_prompt: !!latestCase.force_contact_prompt,
+            force_contact_prompt: !!latestCase.contact_requested || !!latestCase.force_contact_prompt,
             case_id: latestCase.id
         });
     } catch (error) {
