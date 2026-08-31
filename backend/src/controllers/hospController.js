@@ -12,8 +12,17 @@ async function verifyRole(uid) {
 async function getHospitals(req, res) {
     try {
         const { adminUid } = req.query;
-        // 如果沒有提供 adminUid（例如前台病人端），允許匿名讀取名稱，但只回傳特定那筆
+        // 如果沒有提供 adminUid（例如前台病人端或申請加入的關懷師）
         if (!adminUid) {
+            if (req.query.action === 'list_all') {
+                const snapshot = await db.collection('Hospitals').get();
+                let hospitals = [];
+                snapshot.forEach(doc => {
+                    hospitals.push({ id: doc.id, hosp_name: doc.data().hosp_name });
+                });
+                return res.status(200).json({ success: true, hospitals });
+            }
+
             const hospId = req.query.hospId;
             if (!hospId) return res.status(400).json({ success: false, message: 'Missing hospId' });
             

@@ -72,7 +72,8 @@ app.get('/api/patient/check-consent', checkConsent);
 app.post('/api/patient/consent', submitConsent);
 
 // 人員權限設定 API
-const { getUsers, saveUser, deleteUser } = require('./src/controllers/userController');
+const { getUsers, saveUser, deleteUser, applyUser } = require('./src/controllers/userController');
+app.post('/api/dashboard/users/apply', applyUser);
 app.get('/api/dashboard/users', getUsers);
 app.post('/api/dashboard/users', saveUser);
 app.delete('/api/dashboard/users/:uid', deleteUser);

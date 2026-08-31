@@ -114,4 +114,29 @@ async function deleteUser(req, res) {
     }
 }
 
-module.exports = { getUsers, saveUser, deleteUser };
+// 申請加入關懷師 API
+async function applyUser(req, res) {
+    try {
+        const { lineUid, displayName, hospId } = req.body;
+        
+        if (!lineUid || !hospId) {
+            return res.status(400).json({ success: false, message: '參數不齊全' });
+        }
+
+        const userRef = db.collection('Users').doc(lineUid);
+        await userRef.set({
+            line_uid: lineUid,
+            displayName: displayName || '未命名',
+            role: 'pending',
+            hosp_id: hospId,
+            created_at: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        return res.status(200).json({ success: true, message: '申請已送出！' });
+    } catch (e) {
+        console.error("申請權限失敗:", e);
+        return res.status(500).json({ success: false, message: '伺服器寫入錯誤' });
+    }
+}
+
+module.exports = { getUsers, saveUser, deleteUser, applyUser };

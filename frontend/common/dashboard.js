@@ -156,21 +156,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 userRole = data.role;
                 
                 // 未授權人員隱藏選單 (除了 UID 複製)
-                if (userRole === 'unknown') {
+                if (userRole === 'unknown' || userRole === 'pending') {
                     document.getElementById('main-tabs').style.display = 'none';
                     document.getElementById('hospitals-panel').style.display = 'none';
                     document.getElementById('settings-panel').style.display = 'none';
                     document.getElementById('list-header').style.display = 'none';
-                    casesListEl.innerHTML = `
-                        <div class="text-center py-5">
-                            <i class="fa-solid fa-lock fa-4x text-muted mb-3 opacity-50"></i>
-                            <h4 class="text-danger fw-bold">未經授權的關懷師</h4>
-                            <p class="text-muted">您的 LINE UID 尚未綁定權限，請複製以下 UID 交給系統管理員進行開通設定。</p>
-                            <div class="bg-light p-3 rounded-3 d-inline-block border">
-                                <code class="fs-5 text-dark">${chaplainUid}</code>
+                    
+                    if (userRole === 'pending') {
+                        casesListEl.innerHTML = `
+                            <div class="text-center py-5">
+                                <i class="fa-solid fa-clock-rotate-left fa-4x text-warning mb-3 opacity-75"></i>
+                                <h4 class="text-dark fw-bold">申請審核中</h4>
+                                <p class="text-muted">您的申請已送出，請等待該院最高管理員審核...</p>
+                                <div class="bg-light p-3 rounded-3 d-inline-block border mt-3">
+                                    <small class="d-block text-muted mb-1">您的 UID</small>
+                                    <code class="fs-5 text-dark">${chaplainUid}</code>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        casesListEl.innerHTML = `
+                            <div class="text-center py-5" style="max-width: 400px; margin: 0 auto;">
+                                <i class="fa-solid fa-user-shield fa-4x text-primary mb-3 opacity-75"></i>
+                                <h4 class="text-dark fw-bold mb-3">申請加入關懷師</h4>
+                                <p class="text-muted mb-4">您的 LINE UID 尚未綁定權限。請選擇您所屬的醫院並送出申請。</p>
+                                <div class="mb-3 text-start">
+                                    <label class="form-label text-muted small">您的 LINE UID</label>
+                                    <input type="text" class="form-control bg-light text-center" value="${chaplainUid}" readonly>
+                                </div>
+                                <div class="mb-4 text-start">
+                                    <label class="form-label text-muted small">選擇所屬醫院</label>
+                                    <select class="form-select rounded-pill" id="apply-hosp-select">
+                                        <option value="">載入中...</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary rounded-pill w-100 py-2 shadow-sm fw-bold" onclick="submitApplication()"><i class="fa-solid fa-paper-plane"></i> 送出申請</button>
+                            </div>
+                        `;
+                        fetchPublicHospitals();
+                    }
                     return;
                 }
 
@@ -815,17 +839,28 @@ document.addEventListener('DOMContentLoaded', () => {
             let roleBadge = '';
             if (u.role === 'super_admin') roleBadge = '<span class="badge bg-danger">超級管理員</span>';
             else if (u.role === 'admin') roleBadge = '<span class="badge bg-primary">最高管理員</span>';
+            else if (u.role === 'pending') roleBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> 待審核</span>';
             else roleBadge = '<span class="badge bg-success">關懷師</span>';
+
+            let actionBtns = '';
+            if (u.role === 'pending') {
+                actionBtns = `
+                    <button class="btn btn-sm btn-success rounded-pill me-1 shadow-sm" onclick="approveUser('${u.uid}', '${u.displayName || u.name || ''}', '${u.hosp_id || ''}')"><i class="fa-solid fa-check"></i> 核准</button>
+                    <button class="btn btn-sm btn-danger rounded-pill shadow-sm" onclick="rejectUser('${u.uid}')"><i class="fa-solid fa-xmark"></i> 拒絕</button>
+                `;
+            } else {
+                actionBtns = `
+                    <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.displayName || u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
+                    <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
+                `;
+            }
 
             tr.innerHTML = `
                 <td class="fw-bold"><i class="fa-solid fa-user-circle text-muted me-2"></i>${u.displayName || u.name || '未知名稱'}</td>
                 <td>${roleBadge}</td>
                 <td><span class="badge bg-secondary"><i class="fa-solid fa-hospital"></i> ${u.hosp_id || '未綁定'}</span></td>
                 <td><code>${u.uid}</code></td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editUser('${u.uid}', '${u.displayName || u.name || ''}', '${u.role}', '${u.hosp_id || ''}')"><i class="fa-solid fa-pen"></i> 修改</button>
-                    <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteUser('${u.uid}')"><i class="fa-solid fa-trash"></i> 移除</button>
-                </td>
+                <td class="text-end">${actionBtns}</td>
             `;
             tbodyEl.appendChild(tr);
         });
@@ -885,6 +920,104 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 捲動到最上方
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.approveUser = async function(uid, name, hospId) {
+        if (!confirm('確定要核准此人成為關懷師嗎？')) return;
+        try {
+            const res = await fetch(`/api/dashboard/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, lineUid: uid, displayName: name, role: 'chaplain', hospId: hospId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已核准', '該員已成為關懷師', 'success');
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '核准失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.rejectUser = async function(uid) {
+        if (!confirm('確定要拒絕此申請嗎？紀錄將被刪除。')) return;
+        try {
+            const res = await fetch(`/api/dashboard/users/${uid}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已拒絕', '申請紀錄已刪除', 'success');
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '刪除失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    };
+
+    window.fetchPublicHospitals = async function() {
+        try {
+            const res = await fetch('/api/dashboard/hospitals?action=list_all');
+            const data = await res.json();
+            const selectEl = document.getElementById('apply-hosp-select');
+            if (data.success && selectEl) {
+                selectEl.innerHTML = '<option value="">請選擇...</option>';
+                data.hospitals.forEach(h => {
+                    selectEl.innerHTML += `<option value="${h.id}">${h.hosp_name} (${h.id})</option>`;
+                });
+            } else if (selectEl) {
+                selectEl.innerHTML = '<option value="">載入失敗</option>';
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    };
+
+    window.submitApplication = async function() {
+        const hospId = document.getElementById('apply-hosp-select').value;
+        if (!hospId) {
+            Swal.fire('提示', '請先選擇所屬醫院', 'warning');
+            return;
+        }
+
+        let displayName = '未命名關懷師';
+        try {
+            if (liff && liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                displayName = profile.displayName || displayName;
+            }
+        } catch (e) {}
+
+        Swal.fire({
+            title: '送出中...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const res = await fetch('/api/dashboard/users/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lineUid: chaplainUid, displayName, hospId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('申請成功', '請等待管理員審核', 'success').then(() => {
+                    loadCases();
+                });
+            } else {
+                Swal.fire('錯誤', data.message || '申請失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路異常，請稍後再試', 'error');
+        }
     };
 
     // ==========================================
