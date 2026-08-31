@@ -393,6 +393,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         actionsEl.innerHTML = '';
         document.getElementById('chaplain-notes').value = caseData.chaplain_notes || '';
+        
+        const notifySummaryEl = document.getElementById('notify-summary');
+        if (notifySummaryEl) {
+            const summary = caseData.ai_summary || '';
+            const needs = caseData.ai_needs || '';
+            const plan = assessment.plan_and_suggestions || '';
+            notifySummaryEl.value = `現況：${summary}\n需求：${needs}\n處置：${plan}`;
+        }
 
         const canViewPrivate = (userRole === 'super_admin' || userRole === 'admin') || 
                                (caseData.status === 'active' && caseData.claimed_by === chaplainUid) ||
@@ -846,12 +854,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const isNone = document.getElementById('notify-none').checked;
+                const isNone = document.getElementById('notify-none').checked;
         const selectedUids = Array.from(document.querySelectorAll('.notify-checkbox:checked')).map(cb => cb.value);
         if (!isNone && selectedUids.length === 0) {
-            Swal.fire('提示', '請勾選結案通報對象，或勾選「不通報」', 'warning');
+            Swal.fire('提示', '請勾選結案通報對象，或勾選不通報', 'warning');
             return;
         }
+
+        const notifySummaryEl = document.getElementById('notify-summary');
+        const notifySummary = notifySummaryEl ? notifySummaryEl.value : '';
 
         if (!confirm('確定要儲存回報並結案嗎？')) return;
 
@@ -859,7 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/api/dashboard/cases/${caseId}/close`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chaplainUid, notes, notifyUids: selectedUids })
+                body: JSON.stringify({ chaplainUid, notes, notifyUids: selectedUids, notifySummary })
             });
             const data = await res.json();
             if (data.success) {

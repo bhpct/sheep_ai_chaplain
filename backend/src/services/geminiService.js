@@ -55,7 +55,8 @@ async function analyzeInteraction(audioBuffer, mimeType, textInput, history = []
 
 【互動元件 (Widget)】
 如果你想了解對方今天的心情指數，可以不必強迫對方說話。
-**特別注意：** 當對方「沉默不語」、「只回簡短字詞」、或「表現出不想說話 / 極度悲傷」時，**你必須**在回傳的 widget_action 欄位輸出 "mood_stars"。正常對話時請輸出 "none"。
+**特別注意：** 當對方「沉默不語」、「只回簡短字詞」、或「表現出不想說話 / 極度悲傷」時，**你必須**在回傳的 widget_action 欄位輸出 "mood_stars"。
+**重要通知：** 當你判斷本次對話的 risk_level 首次達到 3 或 4 時，或者案主主動表示希望有人陪伴、需要牧師或關懷師時，你必須在 ai_response 中主動關懷並詢問：『請問會希望有關懷師陪伴，或者需要牧師來為您禱告嗎？』，並且**必須**將 widget_action 設為 "request_contact"。正常情況下請輸出 "none"。
 
 你需要輸出一個 JSON 格式的結果，包含以下欄位：
 {

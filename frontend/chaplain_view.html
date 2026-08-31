@@ -240,21 +240,7 @@
                 </div>
             </div>
 
-            <!-- 結案通報對象 -->
-            <div id="close-case-notify-section" style="display:none;">
-                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
-                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
-                    <div class="card-body p-3">
-                        <div class="form-check mb-2 border-bottom pb-2">
-                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
-                            <label class="form-check-label fw-bold text-muted" for="notify-none">
-                                不通報 (僅結案)
-                            </label>
-                        </div>
-                        <div id="notify-users-container" class="row g-2">
-                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -440,21 +426,7 @@
                 </div>
             </div>
 
-            <!-- 結案通報對象 -->
-            <div id="close-case-notify-section" style="display:none;">
-                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
-                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
-                    <div class="card-body p-3">
-                        <div class="form-check mb-2 border-bottom pb-2">
-                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
-                            <label class="form-check-label fw-bold text-muted" for="notify-none">
-                                不通報 (僅結案)
-                            </label>
-                        </div>
-                        <div id="notify-users-container" class="row g-2">
-                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -516,21 +488,7 @@
                 </div>
             </div>
 
-            <!-- 結案通報對象 -->
-            <div id="close-case-notify-section" style="display:none;">
-                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
-                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
-                    <div class="card-body p-3">
-                        <div class="form-check mb-2 border-bottom pb-2">
-                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
-                            <label class="form-check-label fw-bold text-muted" for="notify-none">
-                                不通報 (僅結案)
-                            </label>
-                        </div>
-                        <div id="notify-users-container" class="row g-2">
-                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -546,21 +504,7 @@
                 </div>
             </div>
 
-            <!-- 結案通報對象 -->
-            <div id="close-case-notify-section" style="display:none;">
-                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
-                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
-                    <div class="card-body p-3">
-                        <div class="form-check mb-2 border-bottom pb-2">
-                            <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
-                            <label class="form-check-label fw-bold text-muted" for="notify-none">
-                                不通報 (僅結案)
-                            </label>
-                        </div>
-                        <div id="notify-users-container" class="row g-2">
-                            <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -593,6 +537,10 @@
                 <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-danger"></i> 結案通報對象 (必選)</h6>
                 <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
                     <div class="card-body p-3">
+                        <div class="mb-3 border-bottom pb-3">
+                            <label class="form-label fw-bold text-dark small"><i class="fa-solid fa-robot text-primary"></i> AI 協助整理通報的建議內容 (可修改)：</label>
+                            <textarea id="notify-summary" class="form-control rounded-3 bg-light" rows="3" placeholder="此處為系統自動生成之建議..."></textarea>
+                        </div>
                         <div class="form-check mb-2 border-bottom pb-2">
                             <input class="form-check-input" type="checkbox" id="notify-none" value="none" onchange="toggleNotifyNone(this)">
                             <label class="form-check-label fw-bold text-muted" for="notify-none">
@@ -603,6 +551,8 @@
                             <div class="col-12 text-center text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> 載入名單中...</div>
                         </div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
         </div>

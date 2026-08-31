@@ -217,36 +217,71 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (result.data.widget_action === 'mood_stars') {
                         interactiveWidget.style.display = 'block';
                     } else if (result.data.widget_action === 'request_contact') {
-                        // 網頁攔截機制：自動彈出索取電話表單
                         setTimeout(() => {
                             Swal.fire({
-                                title: '關懷師關心您',
-                                text: '為了能提供您進一步的協助，請留下您的聯絡電話：',
-                                input: 'tel',
-                                inputPlaceholder: '例如：0912345678',
+                                title: '需要協助嗎？',
+                                text: '是否希望有關懷師陪伴，或是需要牧師來為您禱告？',
+                                icon: 'question',
+                                showDenyButton: true,
                                 showCancelButton: true,
-                                confirmButtonText: '送出',
-                                cancelButtonText: '稍後再說',
-                                reverseButtons: true,
-                                inputValidator: (value) => {
-                                    if (!value) return '請輸入電話號碼！';
-                                    if (!/^[0-9\-]+$/.test(value)) return '格式不正確！';
+                                confirmButtonText: '需要牧師',
+                                denyButtonText: '需要關懷師',
+                                cancelButtonText: '先不用',
+                                confirmButtonColor: '#0d6efd',
+                                denyButtonColor: '#198754',
+                                cancelButtonColor: '#6c757d',
+                                customClass: {
+                                    actions: 'flex-column w-100',
+                                    confirmButton: 'w-100 mb-2',
+                                    denyButton: 'w-100 mb-2',
+                                    cancelButton: 'w-100'
                                 }
                             }).then((res) => {
-                                if (res.isConfirmed && res.value) {
-                                    fetch(`/api/patient/cases/${result.data.case_id}/contact`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ phone: res.value })
-                                    })
-                                    .then(r => r.json())
-                                    .then(d => {
-                                        if(d.success) Swal.fire('成功', '已將您的聯絡方式轉交給關懷師！', 'success');
-                                        else Swal.fire('錯誤', d.message, 'error');
+                                if (res.isConfirmed || res.isDenied) {
+                                    // 選擇牧師 (Confirmed) 或 關懷師 (Denied)
+                                    const needType = res.isConfirmed ? 'pastor' : 'chaplain';
+                                    const titleText = needType === 'pastor' ? '聯絡牧師' : '聯絡關懷師';
+                                    
+                                    // 若需要牧師，送 API 更新 needs_prayer (可選)
+                                    
+                                    Swal.fire({
+                                        title: titleText,
+                                        text: '為了能提供您進一步的協助，請留下您的聯絡電話或 LINE ID：',
+                                        input: 'text',
+                                        inputPlaceholder: '例如：0912345678',
+                                        showCancelButton: true,
+                                        confirmButtonText: '送出',
+                                        cancelButtonText: '取消',
+                                        inputValidator: (value) => {
+                                            if (!value) return '請輸入聯絡方式！';
+                                        }
+                                    }).then((inputRes) => {
+                                        if (inputRes.isConfirmed && inputRes.value) {
+                                            submitContactInfo(result.data.case_id, inputRes.value);
+                                        }
                                     });
+                                } else if (res.dismiss === Swal.DismissReason.cancel) {
+                                    // 選擇 先不用
+                                    submitContactInfo(result.data.case_id, "案主不願意提供");
                                 }
                             });
                         }, 1000);
+                    }
+                    
+                    function submitContactInfo(caseId, phone) {
+                        fetch(`/api/patient/cases/${caseId}/contact`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone: phone })
+                        })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success) {
+                                if (phone !== "案主不願意提供") {
+                                    Swal.fire('成功', '已將您的聯絡方式轉交，我們會盡快與您聯繫！', 'success');
+                                }
+                            }
+                        });
                     }
                 });
             } else {
@@ -271,51 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('text', `使用者剛才點擊了心情星星評分：${score} 顆星。請以此分數接續關心。`);
             
             sendToBackend(formData);
-        });
     });
-
-    window.leaveContactInfo = function() {
-        if (!currentCaseId) {
-            Swal.fire({
-                title: '請先說說話',
-                text: '請先按住麥克風對咩咪羊說出您的狀況或困擾，系統建立記錄後，您就能留下聯絡方式囉！',
-                icon: 'info',
-                confirmButtonText: '好，我先錄音'
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: '聯絡關懷師',
-            text: '如果您即將離開畫面，請留下您的電話號碼或 LINE ID，關懷師稍後會主動與您聯繫：',
-            input: 'text',
-            inputPlaceholder: '例如：0912345678 或 LINE ID: my_id123',
-            showCancelButton: true,
-            confirmButtonText: '送出',
-            cancelButtonText: '取消',
-            inputValidator: (value) => {
-                if (!value) return '請輸入聯絡方式！';
-            }
-        }).then((res) => {
-            if (res.isConfirmed && res.value) {
-                fetch(`/api/patient/cases/${currentCaseId}/contact`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: res.value })
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.success) {
-                        Swal.fire('成功', '已將您的聯絡方式轉交給關懷師！', 'success');
-                        chatBubble.innerHTML = `(已送出聯絡方式：${res.value})<br>關懷師已收到您的資訊，稍後會主動與您聯繫，請安心喔！`;
-                    } else {
-                        Swal.fire('錯誤', d.message, 'error');
-                    }
-                })
-                .catch(() => Swal.fire('錯誤', '網路異常', 'error'));
-            }
-        });
-    };
 
     async function initAudio() {
         try {

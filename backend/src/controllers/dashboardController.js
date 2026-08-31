@@ -155,7 +155,7 @@ async function updateCaseNote(req, res) {
 async function closeCase(req, res) {
     try {
         const { caseId } = req.params;
-        const { notes, notifyUids } = req.body;
+        const { notes, notifyUids, notifySummary } = req.body;
 
         const caseRef = db.collection('Cases').doc(caseId);
         const doc = await caseRef.get();
@@ -168,6 +168,7 @@ async function closeCase(req, res) {
         await caseRef.update({
             status: 'closed',
             chaplain_notes: notes || '',
+            ai_notify_summary_used: notifySummary || '', // 可選：記錄下來
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
@@ -175,7 +176,7 @@ async function closeCase(req, res) {
 
         // 通報特定勾選的對象
         if (Array.isArray(notifyUids) && notifyUids.length > 0) {
-            const message = `[結案通報] 案主 ${data.patient_name || '未命名'} (${data.qr_location || '未提供位置'}) 的關懷案件已結案。\n\n關懷師筆記：\n${notes || '無'}`;
+            const message = `[結案通報] 案主 ${data.patient_name || '未命名'} (${data.qr_location || '未提供位置'}) 的關懷案件已結案。\n\nAI 通報建議摘要：\n${notifySummary || '無'}\n\n關懷師回報補充：\n${notes || '無'}`;
             for (let uid of notifyUids) {
                 if (uid) {
                     sendLinePush(uid, message).catch(e => console.warn(`推播失敗給 ${uid}`, e));
@@ -188,7 +189,7 @@ async function closeCase(req, res) {
             const hospId = data.hosp_id;
             // 撈取主角色為 admin 或 roles 包含該院區 admin 的用戶 (簡單處理主角色)
             const usersSnap = await db.collection('Users').where('hosp_id', '==', hospId).where('role', '==', 'admin').get();
-            const adminMessage = `[主管通知] 分院 ${hospId} 有案件已結案。\n案主：${data.patient_name || '未命名'}\n關懷師筆記：\n${notes || '無'}`;
+            const adminMessage = `[主管通知] 分院 ${hospId} 有案件已結案。\n案主：${data.patient_name || '未命名'}\n\nAI 通報建議摘要：\n${notifySummary || '無'}\n\n關懷師回報補充：\n${notes || '無'}`;
             
             usersSnap.forEach(adminDoc => {
                 const adminUid = adminDoc.id;
