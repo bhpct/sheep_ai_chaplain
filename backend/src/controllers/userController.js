@@ -65,6 +65,16 @@ async function saveUser(req, res) {
         const userRef = db.collection('Users').doc(lineUid);
         const existingDoc = await userRef.get();
 
+        // 跨院保護：admin 無法異動其他分院的人員，也無法將人員設定到其他分院
+        if (caller.role === 'admin') {
+            if (hospId !== caller.hosp_id) {
+                return res.status(403).json({ success: false, message: '權限不足，只能設定自己所屬的分院' });
+            }
+            if (existingDoc.exists && existingDoc.data().hosp_id !== caller.hosp_id) {
+                return res.status(403).json({ success: false, message: '權限不足，無法異動其他分院的人員' });
+            }
+        }
+
         // 建立或更新主要角色，並同步維護 roles 陣列
         let currentRoles = existingDoc.exists ? (existingDoc.data().roles || []) : [];
         // 確保主要角色的 {role, hosp_id} 組合已存在於 roles 陣列
@@ -113,6 +123,16 @@ async function deleteUser(req, res) {
         // 不能刪除自己
         if (adminUid === targetUid) {
             return res.status(400).json({ success: false, message: '無法刪除自己' });
+        }
+
+        const targetDoc = await db.collection('Users').doc(targetUid).get();
+        if (!targetDoc.exists) {
+            return res.status(404).json({ success: false, message: '找不到該使用者' });
+        }
+
+        // 跨院保護
+        if (caller.role === 'admin' && targetDoc.data().hosp_id !== caller.hosp_id) {
+            return res.status(403).json({ success: false, message: '權限不足，無法刪除其他分院的人員' });
         }
 
         await db.collection('Users').doc(targetUid).delete();
@@ -164,6 +184,11 @@ async function addUserRole(req, res) {
             return res.status(400).json({ success: false, message: '請提供角色與院區' });
         }
 
+        // 跨院保護
+        if (caller.role === 'admin' && hospId !== caller.hosp_id) {
+            return res.status(403).json({ success: false, message: '權限不足，只能新增自己所屬的分院角色' });
+        }
+
         const userRef = db.collection('Users').doc(uid);
         const userDoc = await userRef.get();
         if (!userDoc.exists) {
@@ -198,6 +223,11 @@ async function removeUserRole(req, res) {
         const caller = await verifyRole(adminUid);
         if (caller.role !== 'super_admin' && caller.role !== 'admin') {
             return res.status(403).json({ success: false, message: '權限不足' });
+        }
+
+        // 跨院保護
+        if (caller.role === 'admin' && hospId !== caller.hosp_id) {
+            return res.status(403).json({ success: false, message: '權限不足，只能移除自己所屬的分院角色' });
         }
 
         const userRef = db.collection('Users').doc(uid);

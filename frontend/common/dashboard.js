@@ -963,14 +963,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // 建立所有角色的 badges
             const allRoles = u.roles && u.roles.length > 0 ? u.roles : [{ role: u.role, hosp_id: u.hosp_id }];
             const roleBadgesHtml = allRoles.map(r => {
-                let color = 'success', label = '關怀師';
+                let color = 'success', label = '關懷師';
                 if (r.role === 'super_admin') { color = 'danger'; label = '超級管理員'; }
                 else if (r.role === 'admin') { color = 'primary'; label = '最高管理員'; }
                 else if (r.role === 'pastor') { color = 'info'; label = '牧師'; }
                 else if (r.role === 'nurse') { color = 'secondary'; label = '護理師'; }
-                else if (r.role === 'social_worker') return `<span class="badge me-1 mb-1" style="background-color:#d63384;">${label} <small class="opacity-75">${r.hosp_id || ''}</small></span>`;
+                else if (r.role === 'social_worker') { color = 'pink'; label = '社工師'; }
                 else if (r.role === 'pending') { color = 'warning'; label = '待審核'; }
-                return `<span class="badge bg-${color} me-1 mb-1">${label} <small class="opacity-75">${r.hosp_id || ''}</small></span>`;
+
+                let removeBtn = '';
+                // 只有 super_admin 或 (admin 且 該角色的 hosp_id 與目前登入的 admin 的 currentHospId 相同) 可以刪除
+                const canRemove = (userRole === 'super_admin') || (userRole === 'admin' && currentHospId === r.hosp_id);
+                // 不允許直接移除主要角色 (從 API 端限制，但 UI 也先防呆)
+                const isPrimary = (r.role === u.role && r.hosp_id === u.hosp_id);
+                
+                if (canRemove && !isPrimary) {
+                    removeBtn = `<i class="fa-solid fa-xmark ms-1 text-white" style="cursor:pointer;" onclick="removeUserRole('${u.uid}', '${r.role}', '${r.hosp_id}')" title="移除此角色"></i>`;
+                }
+
+                if (r.role === 'social_worker') {
+                    return `<span class="badge me-1 mb-1" style="background-color:#d63384;">${label} <small class="opacity-75">${r.hosp_id || ''}</small>${removeBtn}</span>`;
+                }
+                return `<span class="badge bg-${color} me-1 mb-1">${label} <small class="opacity-75">${r.hosp_id || ''}</small>${removeBtn}</span>`;
             }).join('');
 
             let actionBtns = '';
@@ -1470,6 +1484,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadUsers();
             } else {
                 Swal.fire('錯誤', data.message || '新增失敗', 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '網路錯誤', 'error');
+        }
+    }
+
+    // 移除特定角色
+    window.removeUserRole = async function(uid, role, hospId) {
+        if (!confirm(`確定要移除角色 ${role} @ ${hospId} 嗎？`)) return;
+        try {
+            const res = await fetch(`/api/dashboard/users/${uid}/remove-role`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminUid: chaplainUid, role, hospId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('已移除角色', '', 'success');
+                loadUsers();
+            } else {
+                Swal.fire('錯誤', data.message || '移除失敗', 'error');
             }
         } catch (e) {
             Swal.fire('錯誤', '網路錯誤', 'error');
