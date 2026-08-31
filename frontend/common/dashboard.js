@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 await liff.init({ liffId: config.liffId });
                 if (!liff.isLoggedIn()) {
-                    liff.login();
+                    liff.login({ redirectUri: window.location.href });
                     return;
                 }
                 const profile = await liff.getProfile();
