@@ -1463,15 +1463,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const win = window.open('', '_blank');
         win.document.write(`
             <html><head><title>列印 - ${_currentHospName} ${ward}</title>
-            <style>body{font-family:"微軟正黑體",sans-serif;text-align:center;padding:50px;}
-            h1{font-size:3.5rem;font-weight:bold;color:#4a4a4a;margin-bottom:20px;}
-            h2{font-size:2.5rem;color:#6c757d;margin-bottom:40px;}
-            .mascot{width:250px;height:250px;margin-bottom:20px;border-radius:20px;box-shadow:0 4px 8px rgba(0,0,0,0.1);border:none;padding:0;}
-            h3{font-size:3rem;font-weight:bold;color:#0d6efd;margin-bottom:30px;}
-            .qr-code{width:350px;height:350px;border:2px solid #ddd;padding:15px;border-radius:15px;margin:30px 0;}
-            p{font-size:1.8rem;color:#4a4a4a;margin-bottom:10px;line-height:1.5;}
-            .trust-badge{font-size:1.5rem;color:#d63384;font-weight:bold;margin-bottom:30px;}
-            @media print{button{display:none;}}
+            <style>body{font-family:"微軟正黑體",sans-serif;text-align:center;padding:20px; box-sizing:border-box; max-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; margin:0;}
+            h1{font-size:1.4rem;font-weight:bold;color:#4a4a4a;margin-bottom:10px;}
+            h2{font-size:1.4rem;color:#6c757d;margin-bottom:15px;}
+            .mascot{width:150px;height:150px;margin-bottom:10px;border-radius:20px;box-shadow:0 4px 8px rgba(0,0,0,0.1);border:none;padding:0;}
+            h3{font-size:2.2rem;font-weight:bold;color:#0d6efd;margin-bottom:10px;}
+            .qr-code{width:220px;height:220px;border:2px solid #ddd;padding:10px;border-radius:15px;margin:30px 0;}
+            p{font-size:1.4rem;color:#4a4a4a;margin-bottom:10px;line-height:1.5;}
+            .trust-badge{font-size:1.3rem;color:#d63384;font-weight:bold;margin-bottom:10px;}
+            @media print{button{display:none;} @page{margin:0;}}
             </style></head><body>
             <h1>需要找人陪伴聊天嗎？</h1>
             <h2>咩咪羊聽你說心事</h2>
@@ -1526,17 +1526,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <html><head><title>批次列印 - ${_currentHospName} ${ward}</title>
             <style>
             body{font-family:"微軟正黑體",sans-serif;padding:10px;background:#f5f5f5;}
-            h1{text-align:center;margin-bottom:20px;}
+            h1{text-align:center;margin-bottom:10px;}
             .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
             .qr-card{background:white;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
             .mascot-img{width:60px;height:60px;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
-            .qr-img{width:200px;height:200px;margin:10px 0;border:1px solid #ddd;border-radius:10px;padding:10px;}
+            .qr-img{width:150px;height:150px;margin:10px 0;border:1px solid #ddd;border-radius:10px;padding:10px;}
             .hosp-name{font-size:1.1rem;color:#555;margin-bottom:4px;}
             .ward-name{font-size:1.4rem;font-weight:bold;color:#333;margin-bottom:4px;}
-            .room-number{font-size:2.2rem;font-weight:bold;color:#0d6efd;margin-top:4px;margin-bottom:10px;}
+            .room-number{font-size:1.8rem;font-weight:bold;color:#0d6efd;margin-top:4px;margin-bottom:10px;}
             .scan-hint{font-size:1rem;color:#666;margin-top:6px;line-height:1.4;}
-            .controls{text-align:center;margin-bottom:20px;}
-            @media print{.controls{display:none;}.grid{gap:8px;} body{background:white;}}
+            .controls{text-align:center;margin-bottom:10px;}
+            @media print{.controls{display:none;}.grid{gap:8px;} body{background:white;} @page { margin: 0; }}
             </style></head><body>
             <div class="controls">
                 <button onclick="window.print()" style="padding:10px 30px;font-size:1.1rem;background:#0d6efd;color:white;border:none;border-radius:8px;cursor:pointer;">&#128424; 列印所有 QR Code</button>
