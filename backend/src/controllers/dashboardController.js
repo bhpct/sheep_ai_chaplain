@@ -250,28 +250,16 @@ async function deleteCase(req, res) {
     }
 }
 
-// 關懷師主動推播索取聯絡方式
+// 關懷師主動推播索取聯絡方式 (改為網頁主動彈跳)
 async function requestContact(req, res) {
     try {
         const { caseId } = req.params;
         const doc = await db.collection('Cases').doc(caseId).get();
         if (!doc.exists) return res.status(404).json({ success: false, message: 'Case not found' });
         
-        const caseData = doc.data();
-        const patientUid = caseData.patient_uid; // 開案時的 lineUid
-        
-        if (!patientUid || patientUid === 'anonymous_uid') {
-            return res.status(400).json({ success: false, message: '此案件為電腦網頁匿名對話，無 LINE 帳號可發送推播！(案主必須用 LINE 開啟連結)' });
-        }
-
-        // 組裝 LIFF URL 或直接網頁 URL
-        const liffId = process.env.LIFF_ID;
-        let liffUrl = `https://liff.line.me/${liffId}/?page=contact&caseId=${caseId}`;
-        
-        // 標記案件為「已索取電話」
+        // 標記案件為「強制網頁彈跳索取電話」
         await db.collection('Cases').doc(caseId).update({
             contact_requested: true,
-            updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
         const { sendContactCardPush } = require('../services/dispatchService');
@@ -303,12 +291,31 @@ async function submitContact(req, res) {
 
         await db.collection('Cases').doc(caseId).update({
             contact_phone: phone,
+            force_contact_prompt: false,
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
 
         return res.status(200).json({ success: true, message: '電話更新成功' });
     } catch (error) {
         console.error("更新電話失敗:", error);
+        return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
+    }
+}
+
+// 取得案件狀態 (供前端輪詢)
+async function getCaseStatus(req, res) {
+    try {
+        const { caseId } = req.params;
+        const doc = await db.collection('Cases').doc(caseId).get();
+        if (!doc.exists) return res.status(404).json({ success: false, message: 'Case not found' });
+        
+        const data = doc.data();
+        return res.status(200).json({ 
+            success: true, 
+            force_contact_prompt: !!data.force_contact_prompt 
+        });
+    } catch (error) {
+        console.error("取得案件狀態失敗:", error);
         return res.status(500).json({ success: false, message: '伺服器處理錯誤' });
     }
 }
@@ -566,7 +573,7 @@ module.exports = {
     updateCaseNote,
     deleteCase,
     requestContact,
-    submitContact,
+    submitContact, getCaseStatus,
     getChaplains,
     assignCaseManual,
     getCaseTrend,

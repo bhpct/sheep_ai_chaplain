@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { handleAudioUpload, getChatHistory } = require('./src/controllers/audioController');
-const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getChaplains, assignCaseManual, getCaseTrend, assignPastor, completePrayer, updateCaseNote, getStatistics } = require('./src/controllers/dashboardController');
+const { getCases, claimCase, closeCase, deleteCase, requestContact, submitContact, getCaseStatus, getChaplains, assignCaseManual, getCaseTrend, assignPastor, completePrayer, updateCaseNote, getStatistics } = require('./src/controllers/dashboardController');
 const { startDispatcher, runDispatchEngine } = require('./src/services/dispatchService');
 
 const app = express();
@@ -63,6 +63,7 @@ app.put('/api/dashboard/cases/:caseId/note', updateCaseNote);
 app.delete('/api/dashboard/cases/:caseId', deleteCase);
 app.post('/api/dashboard/cases/:caseId/request-contact', requestContact);
 app.post('/api/patient/cases/:caseId/contact', submitContact);
+app.get('/api/patient/cases/:caseId/status', getCaseStatus);
 app.get('/api/dashboard/chaplains', getChaplains);
 app.post('/api/dashboard/cases/:caseId/assign', assignCaseManual);
 app.post('/api/dashboard/cases/:caseId/assign-pastor', assignPastor);
