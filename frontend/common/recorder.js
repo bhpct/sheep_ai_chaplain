@@ -58,6 +58,79 @@ document.addEventListener('DOMContentLoaded', () => {
         type();
     }
 
+    // Polling function for contact prompt
+    let isPromptingContact = false;
+    let statusPollingInterval = null;
+
+    window.triggerContactPrompt = function(caseId, needTypeDefault = 'chaplain') {
+        if (isPromptingContact) return;
+        isPromptingContact = true;
+        
+        Swal.fire({
+            title: window.getTransl('swalNeedHelpTitle'),
+            text: window.getTransl('swalNeedHelpText'),
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: window.getTransl('btnChaplain'),
+            denyButtonText: window.getTransl('btnPastor'),
+            cancelButtonText: window.getTransl('btnNotNow'),
+            confirmButtonColor: '#198754',
+            denyButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            customClass: {
+                actions: 'flex-column',
+                confirmButton: 'w-100 mb-2 py-2 fs-6',
+                denyButton: 'w-100 mb-2 py-2 fs-6',
+                cancelButton: 'w-100 py-2 fs-6'
+            }
+        }).then((res) => {
+            if (res.isConfirmed || res.isDenied) {
+                const needType = res.isConfirmed ? 'chaplain' : 'pastor';
+                const titleText = needType === 'pastor' ? window.getTransl('swalLeavePhoneTitlePastor') : window.getTransl('swalLeavePhoneTitleChaplain');
+                
+                Swal.fire({
+                    title: titleText,
+                    text: window.getTransl('swalLeavePhoneText'),
+                    input: 'text',
+                    inputPlaceholder: window.getTransl('swalLeavePhonePlaceholder'),
+                    showCancelButton: true,
+                    confirmButtonText: window.getTransl('btnSubmit'),
+                    cancelButtonText: window.getTransl('btnCancel'),
+                    inputValidator: (value) => {
+                        if (!value) return window.getTransl('swalLeavePhoneError');
+                    }
+                }).then((inputRes) => {
+                    isPromptingContact = false;
+                    if (inputRes.isConfirmed && inputRes.value) {
+                        submitContactInfo(caseId, inputRes.value);
+                    }
+                });
+            } else if (res.dismiss === Swal.DismissReason.cancel) {
+                isPromptingContact = false;
+                submitContactInfo(caseId, "案主不願意提供");
+            } else {
+                isPromptingContact = false;
+            }
+        });
+    };
+
+    function submitContactInfo(caseId, phone) {
+        fetch(`/api/patient/cases/${caseId}/contact`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phone })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                if (phone !== "案主不願意提供") {
+                    Swal.fire('成功', '已將您的聯絡方式轉交，我們會盡快與您聯繫！', 'success');
+                }
+            }
+        });
+    }
+
     // 初始化 LIFF 與歷史對話紀錄
     async function initLiffAndHistory() {
         try {
@@ -229,70 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         interactiveWidget.style.display = 'block';
                     } else if (result.data.widget_action === 'request_contact') {
                         setTimeout(() => {
-                            Swal.fire({
-                                title: '需要協助嗎？',
-                                text: '是否希望有關懷師陪伴，或是需要牧師來為您禱告？',
-                                icon: 'question',
-                                showDenyButton: true,
-                                showCancelButton: true,
-                                confirmButtonText: '需要牧師',
-                                denyButtonText: '需要關懷師',
-                                cancelButtonText: '先不用',
-                                confirmButtonColor: '#0d6efd',
-                                denyButtonColor: '#198754',
-                                cancelButtonColor: '#6c757d',
-                                customClass: {
-                                    actions: 'flex-column w-100',
-                                    confirmButton: 'w-100 mb-2',
-                                    denyButton: 'w-100 mb-2',
-                                    cancelButton: 'w-100'
-                                }
-                            }).then((res) => {
-                                if (res.isConfirmed || res.isDenied) {
-                                    // 選擇牧師 (Confirmed) 或 關懷師 (Denied)
-                                    const needType = res.isConfirmed ? 'pastor' : 'chaplain';
-                                    const titleText = needType === 'pastor' ? '聯絡牧師' : '聯絡關懷師';
-                                    
-                                    // 若需要牧師，送 API 更新 needs_prayer (可選)
-                                    
-                                    Swal.fire({
-                                        title: titleText,
-                                        text: '為了能提供您進一步的協助，請留下您的聯絡電話或 LINE ID：',
-                                        input: 'text',
-                                        inputPlaceholder: '例如：0912345678',
-                                        showCancelButton: true,
-                                        confirmButtonText: '送出',
-                                        cancelButtonText: '取消',
-                                        inputValidator: (value) => {
-                                            if (!value) return '請輸入聯絡方式！';
-                                        }
-                                    }).then((inputRes) => {
-                                        if (inputRes.isConfirmed && inputRes.value) {
-                                            submitContactInfo(result.data.case_id, inputRes.value);
-                                        }
-                                    });
-                                } else if (res.dismiss === Swal.DismissReason.cancel) {
-                                    // 選擇 先不用
-                                    submitContactInfo(result.data.case_id, "案主不願意提供");
-                                }
-                            });
+                            window.triggerContactPrompt(result.data.case_id);
                         }, 1000);
-                    }
-                    
-                    function submitContactInfo(caseId, phone) {
-                        fetch(`/api/patient/cases/${caseId}/contact`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ phone: phone })
-                        })
-                        .then(r => r.json())
-                        .then(d => {
-                            if (d.success) {
-                                if (phone !== "案主不願意提供") {
-                                    Swal.fire('成功', '已將您的聯絡方式轉交，我們會盡快與您聯繫！', 'success');
-                                }
-                            }
-                        });
                     }
                 });
             } else {
