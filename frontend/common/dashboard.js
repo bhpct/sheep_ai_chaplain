@@ -1359,16 +1359,24 @@ document.addEventListener('DOMContentLoaded', () => {
         win.document.write(`
             <html><head><title>列印 - ${_currentHospName} ${ward}</title>
             <style>body{font-family:"微軟正黑體",sans-serif;text-align:center;padding:50px;}
-            h1{font-size:3rem;margin-bottom:10px;}h2{font-size:2rem;color:#555;}
-            img{width:350px;height:350px;border:2px solid #ddd;padding:15px;border-radius:15px;margin:30px 0;}
-            p{font-size:1.5rem;color:#444;}
+            h1{font-size:3.5rem;font-weight:bold;color:#4a4a4a;margin-bottom:20px;}
+            h2{font-size:2.5rem;color:#6c757d;margin-bottom:40px;}
+            .mascot{width:250px;height:250px;margin-bottom:20px;border-radius:20px;box-shadow:0 4px 8px rgba(0,0,0,0.1);border:none;padding:0;}
+            h3{font-size:3rem;font-weight:bold;color:#0d6efd;margin-bottom:30px;}
+            .qr-code{width:350px;height:350px;border:2px solid #ddd;padding:15px;border-radius:15px;margin:30px 0;}
+            p{font-size:1.8rem;color:#4a4a4a;margin-bottom:10px;line-height:1.5;}
+            .trust-badge{font-size:1.5rem;color:#d63384;font-weight:bold;margin-bottom:30px;}
             @media print{button{display:none;}}
             </style></head><body>
             <h1>需要找人陪伴聊天嗎？</h1>
-            <h2>和和羊聽你說心事</h2>
-            <img src="${imgSrc}">
-            <p>請用手機揃描上方 QR Code<br>進入 <strong>${_currentHospName} ${ward}</strong> 專屬關懷頻道</p>
-            <button onclick="window.print()">&#128424; 列印</button>
+            <h2>咩咪羊聽你說心事</h2>
+            <img class="mascot" src="favicon.png">
+            <h3>${_currentHospName} ${ward}</h3>
+            <p>請用手機掃描下方 QR Code 即可聊天，<br>進入專屬關懷頻道，讓咩咪羊陪伴您。</p>
+            <div class="trust-badge">✅ 不須下載、不須登入</div>
+            <img class="qr-code" src="${imgSrc}">
+            <br>
+            <button onclick="window.print()" style="padding:10px 30px;font-size:1.2rem;background:#0d6efd;color:white;border:none;border-radius:8px;cursor:pointer;">&#128424; 列印</button>
             </body></html>
         `);
         win.document.close();
@@ -1400,11 +1408,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const win = window.open('', '_blank');
         const cardsHtml = qrDataUrls.map(({ room, dataUrl }) => `
             <div class="qr-card">
+                <div class="mascot-container"><img src="favicon.png" class="mascot-img"></div>
                 <div class="hosp-name">${_currentHospName}</div>
                 <div class="ward-name">${ward}</div>
-                <img src="${dataUrl}">
+                <img src="${dataUrl}" class="qr-img">
                 <div class="room-number">${room} 室</div>
-                <div class="scan-hint">掃描進入專屬關懷頻道</div>
+                <div class="scan-hint">請掃描上方 QR Code 即可聊天<br><span style="color:#d63384;font-weight:bold;">✅ 不須下載、不須登入</span></div>
             </div>
         `).join('');
 
@@ -1415,13 +1424,14 @@ document.addEventListener('DOMContentLoaded', () => {
             h1{text-align:center;margin-bottom:20px;}
             .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
             .qr-card{background:white;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-            .qr-card img{width:200px;height:200px;margin:10px 0;}
-            .hosp-name{font-size:1rem;color:#555;margin-bottom:4px;}
-            .ward-name{font-size:1.3rem;font-weight:bold;color:#333;margin-bottom:4px;}
-            .room-number{font-size:2rem;font-weight:bold;color:#0d6efd;margin-top:4px;}
-            .scan-hint{font-size:0.85rem;color:#888;margin-top:6px;}
+            .mascot-img{width:60px;height:60px;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+            .qr-img{width:200px;height:200px;margin:10px 0;border:1px solid #ddd;border-radius:10px;padding:10px;}
+            .hosp-name{font-size:1.1rem;color:#555;margin-bottom:4px;}
+            .ward-name{font-size:1.4rem;font-weight:bold;color:#333;margin-bottom:4px;}
+            .room-number{font-size:2.2rem;font-weight:bold;color:#0d6efd;margin-top:4px;margin-bottom:10px;}
+            .scan-hint{font-size:1rem;color:#666;margin-top:6px;line-height:1.4;}
             .controls{text-align:center;margin-bottom:20px;}
-            @media print{.controls{display:none;}.grid{gap:8px;}}
+            @media print{.controls{display:none;}.grid{gap:8px;} body{background:white;}}
             </style></head><body>
             <div class="controls">
                 <button onclick="window.print()" style="padding:10px 30px;font-size:1.1rem;background:#0d6efd;color:white;border:none;border-radius:8px;cursor:pointer;">&#128424; 列印所有 QR Code</button>
