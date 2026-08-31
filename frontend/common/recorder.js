@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Swal.fire({
                     title: titleText,
                     text: window.getTransl('swalLeavePhoneText'),
-                    input: 'text',
+                    input: 'tel',
                     inputPlaceholder: window.getTransl('swalLeavePhonePlaceholder'),
                     showCancelButton: true,
                     confirmButtonText: window.getTransl('btnSubmit'),
