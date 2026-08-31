@@ -327,20 +327,22 @@ async function getPatientStatus(req, res) {
         
         const snapshot = await db.collection('Cases')
             .where('line_uid', '==', uid)
-            .orderBy('updated_at', 'desc')
-            .limit(1)
             .get();
             
         if (snapshot.empty) {
             return res.status(200).json({ success: true, force_contact_prompt: false, case_id: null });
         }
         
-        const doc = snapshot.docs[0];
-        const data = doc.data();
+        const cases = [];
+        snapshot.forEach(doc => cases.push({ id: doc.id, ...doc.data() }));
+        cases.sort((a, b) => (b.updated_at ? b.updated_at.toMillis() : 0) - (a.updated_at ? a.updated_at.toMillis() : 0));
+        
+        const latestCase = cases[0];
+        
         return res.status(200).json({ 
             success: true, 
-            force_contact_prompt: !!data.force_contact_prompt,
-            case_id: doc.id
+            force_contact_prompt: !!latestCase.force_contact_prompt,
+            case_id: latestCase.id
         });
     } catch (error) {
         console.error("查詢案件狀態失敗", error);
